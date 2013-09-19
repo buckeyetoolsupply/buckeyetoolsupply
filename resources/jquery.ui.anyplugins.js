@@ -20,13 +20,13 @@ http://net.tutsplus.com/tutorials/javascript-ajax/coding-your-first-jquery-ui-pl
 // ** 201318 -> replacement for obsolete .browser() function.
 //.browser() is deprecated as of jquery 1.3 and removed in 1.9+ however a lot of plugins use it.
 // Figure out what browser is being used
-if(typeof typeof jQuery.browser == 'undefined')	{
+if(typeof jQuery.browser == 'undefined')	{
 	jQuery.browser = {
-		version: (userAgent.match( /.+(?:rv|it|ra|ie)[\/: ]([\d.]+)/ ) || [0,'0'])[1],
-		safari: /webkit/.test( userAgent ),
-		opera: /opera/.test( userAgent ),
-		msie: /msie/.test( userAgent ) && !/opera/.test( userAgent ),
-		mozilla: /mozilla/.test( userAgent ) && !/(compatible|webkit)/.test( userAgent )
+		version: (navigator.userAgent.match( /.+(?:rv|it|ra|ie)[\/: ]([\d.]+)/ ) || [0,'0'])[1],
+		safari: /webkit/.test( navigator.userAgent ),
+		opera: /opera/.test( navigator.userAgent ),
+		msie: /msie/.test( navigator.userAgent ) && !/opera/.test( navigator.userAgent ),
+		mozilla: /mozilla/.test( navigator.userAgent ) && !/(compatible|webkit)/.test( navigator.userAgent )
 		}
 	}
 
@@ -136,12 +136,15 @@ For the list of available params, see the 'options' object below.
 
 
 		_getFormattedMessage : function(instance)	{
-//			app.u.dump(" -> _getFormattedMessage executed");
+			app.u.dump(" -> _getFormattedMessage executed");
 			var o = this.options, //shortcut
 			msg = o.message || o, //shortcut to the message itself. if message blank, options are used, which may contain the response data errors (_msgs, err etc)
 			msgDetails = "", //used for iseerr (server side error) and ise/no response
-			$r, //what is returned.
+			$r = $(), //what is returned.
 			amcss = {'margin':'0','paddingBottom':'5px'} //anyMessageCSS - what's applied to P (or each P in the case of _msgs)
+
+//			app.u.dump(' -> msg: '); app.u.dump(msg);
+
 			
 			if(!msg)	{
 //				app.u.dump(" -> msg is blank. could be that message is being handled as a method.");
@@ -198,7 +201,7 @@ For the list of available params, see the 'options' object below.
 //					console.dir("Got to @issues, length: "+L);
 					$r = $("<ul \/>"); //adds a left margin to make multiple messages all align.
 					for(var i = 0; i < L; i += 1)	{
-						$r.append("<li>"+msg['@RESPONSES'][i].type+": "+msg['@RESPONSES'][i].msg+"<\/li>");
+						$r.append("<li>"+(msg['@RESPONSES'][i].msgsubtype || msg['@RESPONSES'][i].msgtype)+": "+msg['@RESPONSES'][i].msg+"<\/li>");
 						}
 					}
 
@@ -214,6 +217,20 @@ For the list of available params, see the 'options' object below.
 				else	{
 //					$r = $("<p \/>").addClass('anyMessage').text('An unknown error has occured');
 					} //unknown data format
+				
+				
+				
+//A message could contain a _msg for success AND @MSGS. always display what is in @MSGS.
+				if(msg['@MSGS'])	{
+					var L = msg['@MSGS'].length;
+					console.dir("Got to @MSGS, length: "+L);
+					$msgs = $("<ul \/>"); //adds a left margin to make multiple messages all align.
+					for(var i = 0; i < L; i += 1)	{
+						$msgs.append("<li>"+msg['@MSGS'][i]['_']+": "+msg['@MSGS'][i]['+']+"<\/li>");
+						}
+					$msgs.appendTo($r);
+					}
+				
 				}
 			else	{
 //				app.u.dump(" -> app.u.formatResponsethis.span 'else' hit. Should not have gotten to this point");
@@ -345,34 +362,35 @@ or this: $('#bob').find('.ui-tabs-nav li:nth-child(2)').trigger('click');
 
 		_addEvent2Tabs : function()	{
 			var self = this;
-// * 201318 -> more efficient selector and only 1 loop
-/*
-			this.tabs.find('li').each(function(){
-				$(this).off('click.anytab').on('click.anytab',function(){
-					self.reveal($(this));
-					});
+// *** 201336 -> tab clicks now use delegated events. more efficient.
+			this.tabs.on('click','a',function(event){
+				event.preventDefault();
+				var oldHash = window.location.hash;
+				_ignoreHashChange = true;
+				window.location.hash = oldHash; //reset hash to what it was before tab click. the prevent default 
+				_ignoreHashChange = false;
+				self.reveal($(this).parent());
+				if($(this).data('app-click'))	{
+					app.u.executeEvent($(this),{'type':'click'});
+					}
+				return false;
 				});
-			this.tabs.find('li a').each(function(){
-				$(this).on('click',function(event){
-					event.preventDefault();
+/*			$('a',this.tabs).each(function(){
+				$(this).on('click.anytabs',function(event){
+					app.u.dump('tab clicked!');
 					});
 				});
 */
-			$('a',this.tabs).each(function(){
-				$(this).on('click.anytabs',function(event){
-//					app.u.dump('tab clicked!');
-					self.reveal($(this).parent());
-					event.preventDefault();
-					return false;
-					});
-				});
-
 			},
 
 		_addClasses2Tabs : function()	{
 			this.tabs.addClass('ui-tabs-nav ui-helper-reset ui-helper-clearfix').css({'padding-left':'0px'});
 			this.tabs.find('a').addClass('ui-tabs-anchor').attr('role','presentation');
-			this.tabs.find('li').addClass('ui-state-default ui-corner-top');
+// * 201336 -> wanted a data reference on the li of the tab that was consistent. can be used to show or hide tab, if needed.
+			this.tabs.find('li').each(function(){
+				$(this).addClass('ui-state-default ui-corner-top');
+				$(this).attr('data-anytabs-tab',$(this).find('a').first().attr('href').substr(1));
+				});
 			},
 //create a container div and add each content panel to it.
 		_handleContent : function()	{
@@ -459,6 +477,9 @@ either templateID or (data or datapointer) are required.
 			templateID : null, //The template to be used
 			datapointer : null, //The data pointer in app.data
 			data : null, //The data used to populate the template
+// ** 201332 -> extendByDatapointers added as a means for having multiple data objects passed into translator at the same time. 
+			extendByDatapointers : new Array(), //an array of datapointers. will merge all the data into one object prior to translation
+			translateOnly : false, //will skip any add template code.
 			showLoading : true, //if no data is passed and createTemplateInstance used, if true will execute show loading.
 			showLoadingMessage : 'Fetching content...', //message passed into showLoading.
 			dataAttribs : {} //will be used to set data attributes on the template [data- not data()].
@@ -470,7 +491,8 @@ either templateID or (data or datapointer) are required.
 			o = self.options, //shortcut
 			$t = self.element; //this is the targeted element (ex: $('#bob').anymessage() then $t is bob)
 // the 'or' portion will attemplate to add a template if the ID is on the DOM.
-
+//			app.u.dump(" -> _init this.element.data(): "); app.u.dump(this.element.data());
+			
 //			app.u.dump("anycontent params: "); app.u.dump(o);
 			if(o.templateID && (app.templates[o.templateID] || self._addNewTemplate(o.templateID)))	{
 //				app.u.dump(" -> passed template check.");
@@ -486,39 +508,76 @@ either templateID or (data or datapointer) are required.
 					gMessage : true,
 					message:"Unable to translate. Either: <br \/>Template ["+o.templateID+"] not specified and/or does not exist ["+typeof app.templates[o.templateID]+"].<br \/> OR does not specified ["+typeof o.data+"] OR no datapointer ["+o.datapointer+"] does not exist in app.data "});
 				}
+// ** 201324 -> for the admin UI, need to make sure data is getting set.
+//always add the dataAttribs as 'data()'. that way they're available even if a failure occurs later.
+//applying theme as data() insteat of attr('data-** means case is preserved.
+			if(o.dataAttribs)	{
+//				app.u.dump(" -> this.element.id: "+this.element.attr('id'));
+				this.element.data(o.dataAttribs);
+				}
+			this.element.data('anycontent',true); //tag as anycontent. allows $(this).data('anycontent') to be used before applying anycontent('option','destroy');
 			}, //_init
 
 		_setOption : function(option,value)	{
 			$.Widget.prototype._setOption.apply( this, arguments ); //method already exists in widget factory, so call original.
 			},
+// when a template is translated, what is returned from this function is the data passed into transmogrify. allows for multiple data sets.
+		_getData : function()	{
+			var
+				o = this.options,
+				eData = {}; //extended data. (didn't use data to avoid confusion w/ o.data)
+			
+			//add all the datapointers into one object. 'may' run into issues here if keys are shared. shouldn't be too much of an issue in the admin interface.
+			if(!$.isEmptyObject(o.extendByDatapointers))	{
+				var L = o.extendByDatapointers.length;
+				for(var i = 0; i < L; i += 1)	{
+					if(app.data[o.extendByDatapointers[i]])	{
+						$.extend(true,eData,app.data[o.extendByDatapointers[i]])
+						}
+					}
+				}
+			
+			//datapointer can be set in addition to data or extendbydatapointers. added near the end to preserve integrity.
+			if(o.datapointer && app.data[o.datapointer])	{$.extend(true,eData,app.data[o.datapointer])}
+
+			//data can be set in addition to datapointer or extendbydatapointers. added near the end to preserve integrity.
+			if(o.data)	{$.extend(true,eData,o.data)}
+			
+			return eData;
+			},
 
 
+// *** 201332 -> there was an issue w/ anycontent being run over the same element and it double-populating the template instead of just translating on the second run. The 'istemplated' should fix that.
 		_anyContent : function()	{
 //			app.u.dump(" -> _anyContent executed.");
 			var o = this.options,
 			r = true; // what is returned. false if not able to create template.
 			//isTranslated is added as a data() var to any template that's been translated. A way to globally identify if translation has already occured.
-			
-			if(o.templateID && o.datapointer && app.data[o.datapointer])	{
+//			app.u.dump(" -> _anyContent this.element.data(): "); app.u.dump(this.element.data());
+
+			if(o.templateID && o.datapointer && app.data[o.datapointer] && !o.translateOnly)	{
 //				app.u.dump(" -> template and datapointer present. transmogrify.");
 				this.element.hideLoading().removeClass('loadingBG');
-				this.element.append(app.renderFunctions.transmogrify(o.dataAttribs,o.templateID,app.data[o.datapointer]));
+				this.element.append(app.renderFunctions.transmogrify(o.dataAttribs,o.templateID,this._getData()));
 				this.element.data('isTranslated',true);
+				this.element.data('isTemplated',true);
 				}
-			else if(o.templateID && o.data)	{
+			else if(o.templateID && o.data && !o.translateOnly)	{
 //				app.u.dump(" -> template and data present. transmogrify.");
 //				app.u.dump(" -> element.tagname: "+this.element.prop("tagName"));
 				if(typeof jQuery().hideLoading == 'function'){this.element.hideLoading().removeClass('loadingBG')}
 //				app.u.dump(" -> hideLoading has run.");
-				this.element.append(app.renderFunctions.transmogrify(o.dataAttribs,o.templateID,o.data));
+				this.element.append(app.renderFunctions.transmogrify(o.dataAttribs,o.templateID,this._getData()));
 //				app.u.dump(" -> transmogrified");
 				this.element.data('isTranslated',true);
+				this.element.data('isTemplated',true);
 //				app.u.dump(" -> data.isTranslated set to true.");
 				}
 //a templateID was specified, just add the instance. This likely means some process outside this plugin itself is handling translation.
-			else if(o.templateID)	{
+			else if(o.templateID && !o.translateOnly)	{
 //				app.u.dump(" -> templateID specified. create Instance.");
 				this.element.append(app.renderFunctions.createTemplateInstance(o.templateID,o.dataAttribs));
+				this.element.data('isTemplated',true);
 				if(o.showLoading)	{
 					this.element.showLoading({'message':o.showLoadingMessage});
 					}
@@ -526,14 +585,14 @@ either templateID or (data or datapointer) are required.
 //if just translating because the template has already been rendered
 			else if(o.data)	{
 //				app.u.dump(" -> data specified, translate selector");
-				app.renderFunctions.translateSelector(this.element,o.data);
+				app.renderFunctions.translateSelector(this.element,this._getData());
 				this.element.hideLoading().removeClass('loadingBG');
 				this.element.data('isTranslated',true);
 				}
 //if just translating because the template has already been rendered
 			else if(o.datapointer  && app.data[o.datapointer])	{
 //				app.u.dump(" -> data specified, translate selector");
-				app.renderFunctions.translateSelector(this.element,app.data[o.datapointer]);
+				app.renderFunctions.translateSelector(this.element,this._getData());
 				this.element.hideLoading().removeClass('loadingBG');
 				this.element.data('isTranslated',true);
 				}
@@ -541,6 +600,9 @@ either templateID or (data or datapointer) are required.
 				//should never get here. error handling handled in _init before this is called.
 				r = false;
 				}
+			
+
+			
 			return r;
 			},
 
@@ -556,15 +618,127 @@ either templateID or (data or datapointer) are required.
 			return r;
 			},
 
-//clear the message entirely. run after a close. removes element from DOM.
-		destroy : function(){
-			this.element.empty().remove();
+//clear the contents. leave the parent.
+		_destroy : function(){
+//			app.u.dump(" -> anycontent.destroy EXECUTED");
+			this.element.intervaledEmpty();
+			this.element.removeData();
+//			app.u.dump(" --> this.element.data():"); app.u.dump(this.element.data());
 			}
 		}); // create the widget
 })(jQuery); 
 
 
 
+
+
+
+///// anydropzone \\\\\
+/*
+turn any element into a drop zone for files to be dragged from a users desktop onto the browser.
+
+a lot of this code came from here:
+https://developer.mozilla.org/en-US/docs/Using_files_from_web_applications
+
+*/
+
+(function($) {
+	$.widget("ui.anydropzone",{
+		options : {
+			filetypes : null, //pass in an array of file types supported. ex ['csv','xls']
+			imageAttributes : null, //an object: {h:100,w:100,b:'ffffff'}.
+			folder : null, //folder in media library where images are placed.
+			_preview : null, //used to store the preview.
+//events
+			drop : null, //a function executed when a file is dropped. executed for each file. file,event passed in.
+			upload : null //a function executed after the upload has occured. executed for each file. file,event,responsedata passed in. executed whether response contains errors or not.
+			},
+		_init : function(){
+//			app.u.dump('got to init');
+			var
+				$dropzone = this.element,
+				anyfiledrop = this; //inside the event handlers below, 'this' loses context.
+			
+			if($dropzone.data('widget-anydropzone'))	{} //already an anydropzone
+			else{
+				$dropzone.data('widget-anydropzone',true);
+				if(this.options.status instanceof jQuery)	{
+					app.u.dump(" -> status element IS defined.");
+					}
+
+				if(this.options.thumbList instanceof jQuery)	{
+					app.u.dump(" -> thumblist element IS defined.");
+					}
+
+				$dropzone.on("dragover dragenter", function(event) {
+					event.stopPropagation();
+					event.preventDefault();
+					})
+
+				$dropzone.on("drop",function(event){
+					event.preventDefault();
+					event.stopPropagation();
+					anyfiledrop._drop(event);
+					});
+				}			
+
+			}, //_init
+
+		_setOption : function(option,value)	{
+			$.Widget.prototype._setOption.apply( this, arguments ); //method already exists in widget factory, so call original.
+			}, //_setOption
+
+		_sendFiles : function()	{
+			var imgs = document.querySelectorAll(".newMediaFile");
+			for (var i = 0; i < imgs.length; i++) {
+				this._fileUpload(imgs[i], imgs[i].file);
+				}
+			},
+
+		_fileUpload : function(img, file)	{
+			
+			file.name = file.name.toLowerCase();
+			
+			var o = this.options;
+			var reader = new FileReader();  
+			var folder = o.folder || file.name.charAt(0).toLowerCase();
+			$(img).attr('data-filename',folder+'/'+file.name); //used during the save.
+			reader.onload = function(evt) {
+				app.model.addDispatchToQ({
+					'_cmd':'adminImageUpload',
+					'base64' : btoa(evt.target.result), //btoa is binary to base64
+					'folder' : folder,
+					'filename' : file.name,
+					'_tag':	{
+						'callback' : function(rd){
+//							if(typeof o.upload === 'function')	{
+//								o.upload(file,event,rd);
+//								}
+							}
+						}
+					},'passive');
+				app.model.dispatchThis('passive');
+//				xhr.sendAsBinary(evt.target.result);
+				};
+			reader.readAsBinaryString(file);
+			},
+
+//executed when a file is dropped onto a dropzone.
+		_drop : function(event)	{
+			event.preventDefault();
+			var dt = event.originalEvent.dataTransfer; //moz def. wants to look in orginalEvent. docs online looked just in event.dataTransfer.
+			if(typeof this.options.drop === 'function')	{
+				new this.options.drop(dt.files,event,this); // !!! revisit this. should pass in 'events' and 'ui' like other plugins. need to figure that out.
+				}
+			this._sendFiles();
+			}, //_drop
+
+
+		_destroy : function(){
+			this.element.empty();
+			} //_destroy
+		}); // create the widget
+})(jQuery); 
 
 
 
@@ -672,69 +846,69 @@ run $('#someTable').anytable() to have the headers become clickable for sorting 
 (function($) {
 	$.widget("ui.anytable",{
 		options : {
-			inverse : false
+			inverse : false,
+			defaultSortColumn : undefined
 			},
 		_init : function(){
-			this._styleHeader();
+
 			var
 				$table = this.element,
-				o = this.options;
+				o = this.options;			
 			
-	
+			if($table.data('widget-anytable'))	{} //already an anytable
+			else{
+
+			$table.attr('data-widget-anytable',true);
+			this._styleHeader();
+			
+			
 			$('th',$table).each(function(){
 
-var th = $(this),
-thIndex = th.index();
-
-// * 201318 -> support for data-anytable-nosort='true' which will disable sorting on the th.
-if(th.data('anytable-nosort'))	{} //sorting is disabled on this column. good for columns that only have buttons.
-else	{
-	th.on('click.anytablesort',function(){
-		$table.find('td').filter(function(){
-			return $(this).index() === thIndex;
-			}).sortElements(function(a, b){
-				var r;
-				var numA = Number($.text([a]).replace(/[^\w\s]/gi, ''));
-				var numB = Number($.text([b]).replace(/[^\w\s]/gi, ''));
-				if(numA && numB)	{
-	//				console.log('is a number');
-					r = numA > numB ? o.inverse ? -1 : 1 : o.inverse ? 1 : -1; //toLowerCase make the sort case-insensitive.
-					}
+				var th = $(this),
+				thIndex = th.index();
+				
+				// * 201318 -> support for data-anytable-nosort='true' which will disable sorting on the th.
+				if(th.data('anytable-nosort'))	{} //sorting is disabled on this column. good for columns that only have buttons.
 				else	{
-					r = $.text([a]).toLowerCase() > $.text([b]).toLowerCase() ? o.inverse ? -1 : 1 : o.inverse ? 1 : -1; //toLowerCase make the sort case-insensitive.
+					th.on('click.anytablesort',function(){
+						app.u.dump("anytable click triggered");
+						$table.find('td').filter(function(){
+							return $(this).index() === thIndex;
+							}).sortElements(function(a, b){
+								var r;
+								var numA = Number($.text([a]).replace(/[^\w\s]/gi, ''));
+								var numB = Number($.text([b]).replace(/[^\w\s]/gi, ''));
+								if(numA && numB)	{
+					//				app.u.dump('is a number');
+									r = numA > numB ? o.inverse ? -1 : 1 : o.inverse ? 1 : -1; //toLowerCase make the sort case-insensitive.
+									}
+								else	{
+									r = $.text([a]).toLowerCase() > $.text([b]).toLowerCase() ? o.inverse ? -1 : 1 : o.inverse ? 1 : -1; //toLowerCase make the sort case-insensitive.
+									}
+								return r
+								},function(){
+							// parentNode is the element we want to move
+							return this.parentNode; 
+							});
+						o.inverse = !o.inverse;
+						});
 					}
-				return r
-				},function(){
-			// parentNode is the element we want to move
-			return this.parentNode; 
-			});
-		o.inverse = !o.inverse;
-		});
-	}
 
 				}); //ends 'each'
+				}
+			
+if(!isNaN(o.defaultSortColumn))	{
+	app.u.dump(" -> $table.length: "+$table.length);
+	app.u.dump(" -> th,$table.length: "+$('th',$table).length);
+	app.u.dump("nthchild length: "+$("th:nth-child("+Number(o.defaultSortColumn)+")",$table).length);
+	$("thead:first th:nth-child("+Number(o.defaultSortColumn)+")",$table).trigger('click.anytablesort');
+	}			
+
 			}, //_init
 
 		_setOption : function(option,value)	{
 			$.Widget.prototype._setOption.apply( this, arguments ); //method already exists in widget factory, so call original.
-// * 201320 -> the code below isn't necessary (from the copy/paste used to create widget
-/*			switch (option)	{
-				case 'state':
-					(value === 'close') ? this.close() : this.open(); //the open/close function will change the options.state val as well.
-					break;
-
-				case 'settingsMenu':
-					$.extend(this.options.menu,value); //add the new menu to the existing menu object. will overwrite if one already exists.
-					this.destroySettingsMenu();
-					this.buildSettingsMenu();
-					break;
-				
-				default:
-					console.log("Unrecognized option passed into anytable via setOption");
-					console.log(" -> option: "+option);
-					break;
-				}
-*/			}, //_setOption
+			}, //_setOption
 
 		_styleHeader : function()	{
 			var $table = this.element;
@@ -807,9 +981,10 @@ and it'll turn the cb into an ios-esque on/off switch.
 			else if($label.length)	{
 //				app.u.dump(" -> anycbifying. is label: "+$label.is('label'));
 				var $input = $("input",$label).first(),
-				$container = $("<span \/>").addClass('ui-widget ui-widget-content ui-corner-all ui-widget-header').css({'position':'relative','display':'block','width':'55px','margin-right':'6px','height':'20px','z-index':1,'padding':0,'float':'left','float':'left'}),
+				$container = $("<span \/>").addClass('ui-widget ui-widget-content ui-corner-all ui-widget-header').css({'position':'relative','display':'block','width':'55px','margin-right':'6px','height':'20px','z-index':1,'padding':0,'float':'left'}),
 				$span = $("<span \/>").css({'padding':'0px','width':'30px','text-align':'center','height':'20px','line-height':'20px','position':'absolute','top':-1,'z-index':2,'font-size':'.75em'});
 	
+				this.$input = $input;
 				$label.data('anycb',true).css({'min-height':'20px','cursor':'pointer'}); // allows for plugin to check if it's already been run on this element.
 				self.span = $span; //global (within instance) for easy reference.
 //				self.input = $input;//global (within instance) for easy reference.
@@ -823,7 +998,8 @@ and it'll turn the cb into an ios-esque on/off switch.
 				$label.prepend($container);
 				$input.is(':checked') ? self._turnOn() : self._turnOff(); //set default
 //				app.u.dump('got here');
-				$input.on('click.anycb',function(){
+// * 201324 -> changed from click to change. 'supposedly' this listens for programatic changes. I think that's a lie.
+				$input.on('change.anycb',function(){
 //					app.u.dump(" -> anycb is toggled. checked: "+$input.is(':checked'));
 					if($input.is(':checked')){self._turnOn();}
 					else	{self._turnOff();}
@@ -847,6 +1023,11 @@ and it'll turn the cb into an ios-esque on/off switch.
 			this.span.addClass('ui-state-default ui-corner-right').removeClass('ui-state-highlight ui-corner-left');
 			this.span.animate({'left': 24},'fast');
 //			this.input.prop('checked',false);
+			},
+//if a checkbox is generated and 'checked' w/ js
+		update : function()	{
+//			app.u.dump(' -> running update on: '+this.$input.attr('name')+' and checked: '+this.$input.is(':checked'));
+			this.$input.is(':checked') ? this._turnOn() : this._turnOff(); //set default
 			},
 		_setOption : function(option,value)	{
 			$.Widget.prototype._setOption.apply( this, arguments ); //method already exists in widget factory, so call original.
@@ -911,6 +1092,7 @@ Additional a settings button can be added which will contain a dropdown of selec
 			extension : '', //used in conjunction w/ persist.
 			name : '', //used in conjunction w/ persist.
 			persistent : false, //if set to true and name AND extension set, will save to localStorage
+			persistentStateDefault : 'expand',
 			settingsMenu : {}
 			},
 		_init : function(){
@@ -927,11 +1109,10 @@ Additional a settings button can be added which will contain a dropdown of selec
 				if(o.name)	{$t.addClass('panel_'+o.name)} 
 				var $header, $content;
 				
-				
 				if(o.header)	{$header = $("<h2 \/>").text(o.header); $header.appendTo($t)}
 				else	{$header = $t.children(":first")}
 				
-				$header.css({'fontSize':'.85em','lineHeight':'2em','textIndent':'.75em'});
+				$header.css({'fontSize':'.85em','lineHeight':'2em','textIndent':'.75em','border':'none'});
 				$header.wrap($("<div \/>").addClass('ui-widget-header ui-anypanel-header ui-corner-top ').css({'padding':'0px;','minHeight':'24px'}));
 
 				if(o.wholeHeaderToggle)	{
@@ -978,14 +1159,24 @@ Additional a settings button can be added which will contain a dropdown of selec
 					break;
 				
 				default:
-					console.log("Unrecognized option passed into anypanel via setOption");
-					console.log(" -> option: "+option);
+//					app.u.dump("Unrecognized option passed into anypanel via setOption");
+//					app.u.dump(" -> option: "+option);
 					break;
 				}
 			},
-// !!! update this to use anycontent.
 		_anyContent : function()	{
-			var $content = false, //what is returned. will either be a jquery object of content or false
+			o = this.options;
+			var $content;
+			if(o.content)	{
+				$content = o.content;
+				}
+			else	{
+				this.element.anycontent(this.options);
+				}
+			
+			
+// *** 201336 -> this will now use the anycontent plugin instead of a half-assed version of it.
+/*			var $content = false, //what is returned. will either be a jquery object of content or false
 			o = this.options;
 //			app.u.dump("anypanel._anyContent");
 			if(o.content)	{
@@ -1006,10 +1197,16 @@ Additional a settings button can be added which will contain a dropdown of selec
 			else if(o.templateID)	{
 				$content = app.renderFunctions.createTemplateInstance(o.templateID,o.dataAttribs);
 				}
+			else if(o.dispatch)	{
+				app.model.addDispatchToQ(o.dispatch,o.Q);
+				app.model.dispatchThis(o.Q);
+				}
 			else	{
 				
 				}
+			*/
 			return $content;
+
 			},
 
 		_handleButtons : function($header)	{
@@ -1042,12 +1239,16 @@ Additional a settings button can be added which will contain a dropdown of selec
 			if(o.settingsMenu)	{self._buildSettingsMenu()}			
 
 			},
-
+// ** 201324 -> added means of setting a default for 'persistent' state so a panel could be closed if it has never been opened before.
 		_handleInitialState : function()	{
 			if(this.options.state == 'persistent' && this.options.name && this.options.extension)	{
+//				app.u.dump(" -> using persistent settings");
 				var settings = app.ext.admin.u.dpsGet(this.options.extension,'anypanel');
 				if(settings && settings[this.options.name])	{
 					this.options.state = settings[this.options.name].state; //if not defined, default to expand.
+					}
+				else if(this.options.persistentStateDefault == 'expand' || this.options.persistentStateDefault == ' collapse') {
+					this.options.state = this.options.persistentStateDefault;
 					}
 				else	{
 					this.options.state = 'expand';
@@ -1168,10 +1369,11 @@ supported options include tabID (given to the container), tabtext (what appears 
 			},
 
 		_init : function(){
-//			console.log('init sticktab');
+//			app.u.dump('init sticktab');
 			var self = this,
 			o = self.options, //shortcut
-			$t = self.element; //this is the targeted element (ex: $('#bob').anymessage() then $t is bob)
+			$t = self.element, //this is the targeted element (ex: $('#bob').anymessage() then $t is bob)
+			guid = app.u.guidGenerator()
 			
 			if($t.data('isstickytab'))	{
 				//already in a stickytab. do nothing.
@@ -1181,7 +1383,7 @@ supported options include tabID (given to the container), tabtext (what appears 
 //add an id if one doesn't already exist.
 				if($t.attr('id'))	{}
 				else	{
-					$t.attr({'id':(o.tabID || 'stickytab_'+app.u.guidGenerator())}); //the ID goes onto the element this is run on.  allows for methods to easily be run later.
+					$t.attr({'id':(o.tabID) ? 'stickycontents_'+o.tabID : 'stickycontents_'+guid}); //the ID goes onto the element this is run on.  allows for methods to easily be run later.
 					}
 				
 				var 
@@ -1190,7 +1392,8 @@ supported options include tabID (given to the container), tabtext (what appears 
 					$stickytabText = $('.ui-widget-stickytab-tab-text',$sticky)
 	
 				this.sticky = $sticky; //global reference to container for easy access.
-	
+//* 202324  -> tabid wasn't getting applied to tab.
+				$sticky.attr({'id':(o.tabID) ? o.tabID : 'stickytab_'+guid});
 				$sticky.appendTo($tabContainer);
 				this._moveAnimate();
 	//			$('.ui-widget-stickytab-content',$sticky).append(this.element);
@@ -1220,7 +1423,7 @@ supported options include tabID (given to the container), tabtext (what appears 
 
 //if no sticktabs container exists, create one. if more control is desired over location, create a sticktabs element in your html and css to position as desired.
 		_handleContainer : function()	{
-//			console.log('building container');
+//			app.u.dump('building container');
 			var $container = $('#stickytabs');
 			if($container.length)	{} //container is already defined. do nothing.
 			else	{
@@ -1257,11 +1460,11 @@ supported options include tabID (given to the container), tabtext (what appears 
 			},
 //builds the tab and content container.
 		_buildSticky : function()	{
-//			console.log('building sticktab');
+//			app.u.dump('building sticktab');
 			var 
 				$sticky = $("<div \/>").css({'position':'relative'}).addClass('ui-widget ui-widget-stickytab'),
 				$stickytab = $("<div \/>").addClass("ui-widget-stickytab-tab ui-corner-right "+this.options.tabclass),
-				$stickyContent = $("<div \/>").addClass("ui-widget-stickytab-content minimalMode ui-widget ui-widget-content ui-corner-right");
+				$stickyContent = $("<div \/>").addClass("ui-widget-stickytab-content minimalMode detailMode ui-widget ui-widget-content ui-corner-right");
 
 			this._addTabEvents($stickytab);
 			$stickytab.append("<div class='ui-widget-stickytab-tab-text'>"+this.options.tabtext+"</div>");
@@ -1271,7 +1474,7 @@ supported options include tabID (given to the container), tabtext (what appears 
 		_addTabEvents : function($stickytab)	{
 			var self = this;
 			$stickytab.on('click.stickytab',function(){
-				console.log(self.sticky.position().left);
+//				app.u.dump(self.sticky.position().left);
 				if(self.sticky.position().left >= 0)	{
 					self.close();
 					}
@@ -1284,17 +1487,18 @@ supported options include tabID (given to the container), tabtext (what appears 
 			$('.ui-widget-stickytab-tab',this.sticky).trigger('click.stickytab');
 			},
 		open : function()	{
-			console.log('open tab');
+//			app.u.dump('open tab');
 			if(this.sticky.position().left != 0)	{
 				this.sticky.animate({left: 0}, 'slow');
 				}
 			else	{} //already open.
 			},
 		close : function()	{
-			console.log('close tab');
+//			app.u.dump('close tab');
 			this.sticky.animate({left: -(this.sticky.outerWidth())}, 'slow');
 			},
 		destroy : function()	{
+			app.u.dump(" -> stickytab destroy called. this.sticky.id: "+this.sticky.attr('id'));
 			this.sticky.empty().remove();
 			},
 		_setOption : function(option,value)	{
@@ -1302,7 +1506,6 @@ supported options include tabID (given to the container), tabtext (what appears 
 			}
 		}); // create the widget
 })(jQuery);
-
 
 
 
@@ -1316,8 +1519,11 @@ $.fn.intervaledEmpty = function(interval, remove){
 			i++;
 			});
 		}
-	if(remove){
-		$(this).remove();
+	else	{
+// ** only remove in the last iteration, when there are no children, or this could still potentially lock up the browser.
+		if(remove){
+			$(this).remove();
+			}
 		}
 	return this;
 	}

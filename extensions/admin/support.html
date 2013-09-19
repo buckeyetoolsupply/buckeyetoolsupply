@@ -1,3 +1,18 @@
+
+
+<div id='platformInfoTemplate'>
+
+	<div class='marginRight marginBottom floatLeft' data-bind='var:releaseMeta(youtubeVideoID); format:youtubeVideo;'></div>
+	<!-- platformInfo will automatically be appended to the bottom of this -->
+	
+	<div data-app-role='platformInfoContainer'></div>
+
+</div>
+
+
+
+
+
 <div id='supportFileUploadTemplate'>
 
 
@@ -117,9 +132,9 @@
 
 		<div class='marginBottom'>
 		Priority:
-		<label><input type='radio' name='priority' value='LOW' checked='checked' data-app-event='admin_support|tagAsPriority' /><b>Normal:</b> information needed.</label>
-		<label><input type='radio' name='priority' value='MED' data-app-event='admin_support|tagAsPriority' /><b>Escalated:</b> need assistance as soon as possible.</label>
-		<label><input type='radio' name='priority' value='HIGH' data-app-event='admin_support|tagAsPriority' /><b>Urgent:</b> emergency only (site is down, no work around).</label>
+		<label><input type='radio' name='priority' value='LOW' checked='checked' data-app-event='admin_support|tagAsPriority' /><b>Low:</b> information needed.</label>
+		<label><input type='radio' name='priority' value='MED' data-app-event='admin_support|tagAsPriority' /><b>High:</b> need assistance as soon as possible.</label>
+		<label><input type='radio' name='priority' value='HIGH' data-app-event='admin_support|tagAsPriority' /><b>System Outage:</b> site is down.</label>
 		</div>
 <!--
 		<div class='marginBottom'>
@@ -168,7 +183,18 @@
 	
 	<div class='labelsAsBreaks alignedLabels alignedInputs'>
 	<button data-app-event="admin_support|showFileAttachmentModal" class='marginBottom'>Add File(s) To Ticket</button><!-- intentionally outside the form. form is emptied on update -->
-	<form>
+	<table class='gridTable fullWidth marginBottom'>
+	<thead>
+	<tr>
+		<th>Filename</th>
+		<th>Added</th>
+		<th></th>
+	</tr>
+	</thead>
+	<tbody data-bind="var: ticket(@FILES); format:processList; loadsTemplate:supportTicketFilesRowTemplate;"></tbody>
+	</table>
+
+	<form class='marginTop'>
 	<fieldset>
 		<legend>Provide Additional Information:</legend>
 		<label><span>Message: </span><textarea name='note' required='required'></textarea></label>
@@ -177,9 +203,6 @@
 	</form>
 	</div>
 
-	<table>
-	<tbody data-bind="var: ticket(@FILES); format:processList; loadsTemplate:supportTicketFilesRowTemplate;"></tbody>
-	</table>
 
 </div>
 
@@ -199,6 +222,9 @@
 <tr id='supportTicketFilesRowTemplate'>
 	<td data-bind='var: ticket(uploaded); format:text;'></td>
 	<td data-bind='var: ticket(created); format:text;'></td>
+	<td>
+	<button data-app-event="admin_support|adminTicketFileGetExec">Download File</button>
+	</td>
 </tr>
 </table>
 

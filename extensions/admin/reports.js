@@ -106,32 +106,37 @@ var admin_reports = function() {
 				
 				var $reportsList = $("[data-app-role='recentReportsList']",$target);
 				$reportsList.showLoading({'message':'Fetching Recently Run Reports'});
-				app.ext.admin.calls.adminBatchJobList.init('',{'callback':function(rd){
-					$reportsList.hideLoading();
-					if(app.model.responseHasErrors(rd)){
-						$reportsList.anymessage({'message':rd});
-						}
-					else	{
-						var reports = new Array(), //used to store a small portion of the batch list. 10 reports.
-						L = app.data[rd.datapointer]['@JOBS'].length - 1;
-//reports are in chronological order, oldest to newest. here, we want to show the ten newest.
-						for(var i = L; i >= 0; i -= 1)	{
-							if(app.data[rd.datapointer]['@JOBS'][i].BATCH_EXEC == 'REPORT')	{
-								reports.push(app.data[rd.datapointer]['@JOBS'][i]);
+				app.model.addDispatchToQ({
+					'_cmd':'adminBatchJobList',
+					'_tag':	{
+						'datapointer' : 'adminBatchJobList',
+						'callback':function(rd){
+							$reportsList.hideLoading();
+							if(app.model.responseHasErrors(rd)){
+								$reportsList.anymessage({'message':rd});
 								}
-							else	{}
-							if(reports.length >= 10)	{break} //only need ten.
+							else	{
+								var reports = new Array(), //used to store a small portion of the batch list. 10 reports.
+								L = app.data[rd.datapointer]['@JOBS'].length - 1;
+		//reports are in chronological order, oldest to newest. here, we want to show the ten newest.
+								for(var i = L; i >= 0; i -= 1)	{
+									if(app.data[rd.datapointer]['@JOBS'][i].BATCH_EXEC == 'REPORT')	{
+										reports.push(app.data[rd.datapointer]['@JOBS'][i]);
+										}
+									else	{}
+									if(reports.length >= 10)	{break} //only need ten.
+									}
+								
+		//						app.u.dump("$reportsList.length: "+$reportsList.length);
+								if(reports.length)	{
+									$reportsList.anycontent({data:{'@JOBS': reports}});
+									app.u.handleAppEvents($reportsList);
+									$('table',$reportsList).anytable();
+									}
+								}
 							}
-						
-//						app.u.dump("$reportsList.length: "+$reportsList.length);
-						if(reports.length)	{
-							$reportsList.anycontent({data:{'@JOBS': reports}});
-							app.u.handleAppEvents($reportsList);
-							$('table',$reportsList).anytable();
-							}
-						
 						}
-					}},'mutable');
+					},'mutable');
 				app.model.dispatchThis('mutable');
 				
 				},
@@ -1354,7 +1359,7 @@ $btn.off('click.execAdminKPIDBCollectionUpdate').on('click.execAdminKPIDBCollect
 					var $form = $btn.closest('form');
 					if(app.u.validateForm($form))	{
 						var sfo = {'%vars':$form.serializeJSON()}
-						sfo.type = 'REPORT';
+						sfo.type = 'REPORT/'+sfo['%vars'].REPORT;
 						sfo.guid = app.u.guidGenerator();
 						if(sfo['%vars'].PERIOD == 'BYTIMESTAMP')	{
 							sfo['%vars'].begints = (sfo['%vars'].begints / 1000)

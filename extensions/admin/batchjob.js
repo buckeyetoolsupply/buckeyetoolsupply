@@ -18,7 +18,7 @@
 
 
 var admin_batchJob = function() {
-	var theseTemplates = new Array('batchJobStatusTemplate','batchJobManagerPageTemplate','batchJobRowTemplate');
+	var theseTemplates = new Array('batchJobStatusTemplate','batchJobRowTemplate');
 	var r = {
 
 
@@ -43,13 +43,90 @@ var admin_batchJob = function() {
 				}
 			},
 		
+		showReport : {
+			onSuccess : function(_rtag){
+				if(_rtag.jqObj && _rtag.jqObj instanceof jQuery)	{
+
+
+
+var 
+	L = app.data[_rtag.datapointer]['@HEAD'].length,
+	reportElementID = 'batchReport_'+app.data[_rtag.datapointer].guid
+	tableHeads = new Array();
+
+if(app.data[_rtag.datapointer]['@BODY'] && app.data[_rtag.datapointer]['@BODY'].length)	{
+//google visualization will error badly if the # of columns in the each body row doesn't match the # of columns in the head.
+//								app.u.dump(" -> app.data[_rtag.datapointer]['@BODY'][0].length: "+app.data[_rtag.datapointer]['@BODY'][0].length);
+//								app.u.dump(" -> app.data[_rtag.datapointer]['@HEAD'][0].length: "+app.data[_rtag.datapointer]['@HEAD'][0].length);
+	if(app.data[_rtag.datapointer]['@BODY'][0].length == app.data[_rtag.datapointer]['@HEAD'].length)	{
+//@HEAD is returned with each item as an object. google visualization wants a simple array. this handles the conversion.							
+		for(var i = 0; i < L; i += 1)	{
+			tableHeads.push(app.data[_rtag.datapointer]['@HEAD'][i].name);
+			}
+
+		var $expBtn = $("<button \/>").text('Export to CSV').button().addClass('floatRight').on('click',function(){
+//										$('.google-visualization-table-table').toCSV();  //exports just the page in focus.
+			var L = app.data[_rtag.datapointer]['@BODY'].length;
+			//first row of CSV is the headers.
+			var csv = $.map(app.data[_rtag.datapointer]['@HEAD'],function(val){
+					return '"'+val.name+'"';
+					})
+
+			for(var i = 0; i < L; i += 1)	{
+				csv += "\n"+$.map(app.data[_rtag.datapointer]['@BODY'][i],function(val){
+//												return '"'+((val == null) ? '' : escape(val))+'"';
+					return '"'+((val == null) ? '' : val.replace(/"/g,'""'))+'"'; //don't return 'null' into report.
+					})
+				}
+			
+			app.ext.admin.u.fileDownloadInModal({
+				'skipDecode':true,
+				'filename':app.data[_rtag.datapointer].title+'.csv',
+				'mime_type':'text/csv',
+				'body':csv});
+			}).appendTo(_rtag.jqObj);
+
+
+		_rtag.jqObj.append("<h1>"+(app.data[_rtag.datapointer].title || "")+"<\/h1>");
+		_rtag.jqObj.append("<h2>"+(app.data[_rtag.datapointer].subtitle || "")+"<\/h2>");
+		_rtag.jqObj.append($("<div \/>",{'id':reportElementID+"_toolbar"})); //add element to dom for visualization toolbar
+		_rtag.jqObj.append($("<div \/>",{'id':reportElementID}).addClass('smallTxt')); //add element to dom for visualization table
+		
+
+		app.ext.admin_reports.u.drawTable(reportElementID,tableHeads,app.data[_rtag.datapointer]['@BODY']);
+		app.ext.admin_reports.u.drawToolbar(reportElementID+"_toolbar");
+		
+		}
+	else	{
+		var errorDetails = "";
+		_rtag.jqObj.anymessage({'message':'The number of columns in the data do not match the number of columns in the head. This is likely due to an old report being opened in the new report interface. <b>Please re-run the report and open the new copy.</b>  If the error persist, please report to support with batch ID.','persistent':true});
+		}
+	
+	
+	}
+else	{
+	_rtag.jqObj.anymessage({'message':'There are no rows/data in this report.','persistent':true});
+	}
+
+_rtag.jqObj.hideLoading(); //this is after drawTable, which may take a moment.
+
+
+
+
+					}
+				else	{
+					// throw warning here.
+					}
+				}
+			},
+		
 		showBatchJobStatus : {
 			onSuccess : function(tagObj){
 				if(tagObj.parentID)	{
 					$(app.u.jqSelector('#',tagObj.parentID)).hideLoading();
 					}
-				else if(tagObj.jqObj && typeof tabgbj.jqObj === 'object')	{
-					tabgbj.jqObj.hideLoading();
+				else if(tagObj.jqObj && typeof tagObj.jqObj === 'object')	{
+					tagObj.jqObj.hideLoading();
 					}
 				else	{} //nothing to hideloading on.
 //error handling for no jobid is handled inside this function.
@@ -70,22 +147,24 @@ var admin_batchJob = function() {
 
 		a : {
 			
-			showBatchJobManager : function($tabContent){
-				$tabContent.empty();
-//generate some of the task list content right away so the user knows something is happening.
-				$tabContent.showLoading({'message':'Fetching list of batch jobs'});
-				app.ext.admin.calls.adminBatchJobList.init('',{'callback':function(rd){
-					$tabContent.hideLoading();
-					if(app.model.responseHasErrors(rd)){
-						$tabContent.anymessage({'message':rd});
-						}
-					else	{
-						$tabContent.anycontent({'templateID':'batchJobManagerPageTemplate','dataAttribs':{'id':'batchJobManagerContent'},'datapointer':rd.datapointer});
-						$(".gridTable",$tabContent).anytable({'inverse':true}); //inverse will sort high to low.
-						$(".gridTable",$tabContent).find('th').first().trigger('click'); //sort by batch job.
-						app.u.handleAppEvents($tabContent);
-						}
-					}},'mutable');
+			showBatchJobManager : function($target){
+				$target.empty();
+				var $table = app.ext.admin.i.DMICreate($target,{
+					'header' : 'Batch Jobs',
+					'className' : 'batchjobManager',
+					'buttons' : ["<button data-app-event='admin|refreshDMI'>Refresh List<\/button>"],
+					'thead' : ['ID','Job Name','Job Type','User','Create','Status',''],
+					'tbodyDatabind' : "var: users(@JOBS); format:processList; loadsTemplate:batchJobRowTemplate;",
+					'cmdVars' : {
+						'_cmd' : 'adminBatchJobList',
+						'_tag' : {
+							'anytable' : {
+								'inverse' : true,
+								'defaultSortColumn' : 1
+								},
+							'datapointer' : 'adminBatchJobList'},
+							}
+						});
 				app.model.dispatchThis('mutable');
 				},
 
@@ -93,7 +172,10 @@ var admin_batchJob = function() {
 			adminBatchJobCreate : function(opts){
 				$(app.u.jqSelector('#',app.ext.admin.vars.tab+"Content")).showLoading({'message':'Registering Batch Job'});
 //parentID is specified for error handling purposes. That's where error messages should go and also what the hideLoading() selector should be.
-				app.ext.admin.calls.adminBatchJobCreate.init(opts,{'callback':'showBatchJobStatus','extension':'admin_batchJob','parentID':app.ext.admin.vars.tab+"Content"},'immutable');
+				app.model.addDispatchToQ($.extend({
+					'_cmd':'adminBatchJobCreate',
+					'_tag':	{'callback':'showBatchJobStatus','extension':'admin_batchJob','parentID':app.ext.admin.vars.tab+"Content",datapointer : opts.guid ? "adminBatchJobCreate|"+opts.guid : "adminBatchJobCreate"}
+					},opts),'immutable');
 				app.model.dispatchThis('immutable');
 				},
 
@@ -103,13 +185,18 @@ var admin_batchJob = function() {
 					var $target = $('#batchJobStatusModal'); //modal id.
 					if($target.length)	{$target.empty()}
 					else	{
-						$target = $("<div \/>").attr({'id':'batchJobStatusModal','title':'Batch Job Status: '+jobid}).appendTo('body');
+						$target = $("<div \/>").attr({'id':'batchJobStatusModal'}).appendTo('body');
 						$target.dialog({'modal':true,'width':500,'height':300,'autoOpen':false});
 						}
+					$target.dialog('option','title','Batch Job Status: '+jobid);
 					$target.dialog('open');
 					$target.showLoading({'message':'Fetching Batch Job Details'});
-					app.ext.admin.calls.adminBatchJobStatus.init(jobid,{'callback':'anycontent','jqObj':$target,'templateID':'batchJobStatusTemplate','dataAttribs': {'jobid':jobid}},'immutable');
-					app.model.dispatchThis('immutable');
+app.model.addDispatchToQ({
+	'_cmd':'adminBatchJobStatus',
+	'jobid':jobid,
+	'_tag':	{'callback':'anycontent','datapointer':'adminBatchJobStatus|'+jobid,'jqObj':$target,'templateID':'batchJobStatusTemplate','dataAttribs': {'jobid':jobid}}
+	},'mutable');
+app.model.dispatchThis('mutable');
 					}
 				else	{
 					app.u.throwMessage("No jobid specified in admin_batchJob.a.showBatchJobStatus");
@@ -122,58 +209,7 @@ var admin_batchJob = function() {
 					$target.empty();
 					$target.showLoading({'message':'Generating Report'}); //run after the empty or the loading gfx gets removed.
 //					app.u.dump(" -> $target and vars.guid are set.");
-					app.ext.admin.calls.adminReportDownload.init(vars.guid,{'callback':function(rd)	{
-						if(app.model.responseHasErrors(rd)){
-							$target.hideLoading();
-							$target.anymessage({'message':rd});
-							}
-						else	{
-							var L = app.data[rd.datapointer]['@HEAD'].length,
-							reportElementID = 'batchReport_'+vars.guid
-							tableHeads = new Array();
-							
-							if(app.data[rd.datapointer]['@BODY'] && app.data[rd.datapointer]['@BODY'].length)	{
-//google visualization will error badly if the # of columns in the each body row doesn't match the # of columns in the head.
-app.u.dump(" -> app.data[rd.datapointer]['@BODY'][0].length: "+app.data[rd.datapointer]['@BODY'][0].length);
-app.u.dump(" -> app.data[rd.datapointer]['@HEAD'][0].length: "+app.data[rd.datapointer]['@HEAD'][0].length);
-								if(app.data[rd.datapointer]['@BODY'][0].length == app.data[rd.datapointer]['@HEAD'].length)	{
-//@HEAD is returned with each item as an object. google visualization wants a simple array. this handles the conversion.							
-									for(var i = 0; i < L; i += 1)	{
-										tableHeads.push(app.data[rd.datapointer]['@HEAD'][i].name);
-										}
-
-									var $expBtn = $("<button \/>").text('Export Page to CSV').button().on('click',function(){
-										$('.google-visualization-table-table').toCSV();
-										}).appendTo($target);
-
-
-									$target.append("<h1>"+app.data[rd.datapointer].title || ""+"<\/h1>");
-									$target.append("<h2>"+app.data[rd.datapointer].subtitle || ""+"<\/h2>");
-									$target.append($("<div \/>",{'id':reportElementID+"_toolbar"})); //add element to dom for visualization toolbar
-									$target.append($("<div \/>",{'id':reportElementID}).addClass('smallTxt')); //add element to dom for visualization table
-									
-
-									app.ext.admin_reports.u.drawTable(reportElementID,tableHeads,app.data[rd.datapointer]['@BODY']);
-									app.ext.admin_reports.u.drawToolbar(reportElementID+"_toolbar");
-									
-									}
-								else	{
-									var errorDetails = "";
-									for(index in vars)	{
-										errorDetails += "<br>"+index+": "+vars[index];
-										}
-									$target.anymessage({'message':'The number of columns in the data do not match the number of columns in the head. This is likely due to an old report being opened in the new report interface. <b>Please re-run the report and open the new copy.</b>  If the error persist, please report to support with the following error details:'+errorDetails,'persistent':true});
-									}
-								
-								
-								}
-							else	{
-								$target.anymessage({'message':'There are no rows/data in this report.','persistent':true});
-								}
-							
-							$target.hideLoading(); //this is after drawTable, which may take a moment.
-							}
-						}},'mutable'); app.model.dispatchThis('mutable');
+					app.ext.admin.calls.adminReportDownload.init(vars.guid,{'callback':'showReport','jqObj':$target,'extension':'admin_batchJob'},'mutable'); app.model.dispatchThis('mutable');
 					app.model.dispatchThis('mutable');
 					}
 				else	{
@@ -227,28 +263,56 @@ app.u.dump(" -> app.data[rd.datapointer]['@HEAD'][0].length: "+app.data[rd.datap
 				else	{
 //btn hidden by default. no action needed.
 					}
-				},
-			
-			execBatchCleanup : function($btn)	{
-				var $row = $btn.closest('tr');
-				if($row.data('status') == 'ERROR' || $row.data('status') == 'finished' || $row.data('status') == 'abort')	{
-					$btn.show({text: false,icons: {primary: "ui-icon-trash"}});
-					$btn.button(); //daisy-chaining the button on the show didn't work. button didn't get classes.
-					$btn.off('click.execBatchCleanup').on('click.execBatchCleanup',function(){
-						var jobid = $btn.closest('[data-jobid]').data('jobid');
-						if(jobid)	{
-							$('#batchJobStatusModal').empty().addClass('loadingBG');
-							app.ext.admin.calls.adminBatchJobCleanup.init(jobid,{'callback':'showMessaging','message':'Batch job has been cleaned up','parentID':'batchJobStatus_'+jobid},'immutable');
-							app.model.dispatchThis('immutable');
-							}
-						else	{
-							$('.appMessaging').anymessage({'message':'In admin_batchJob.e.execBatchCleanup, unable to ascertain jobID from DOM tree.','gMessage':true});
-							}
+				}, //showReport
+
+
+			showDownload : function($btn)	{
+				if($btn.closest('tr').data('batch_exec') == 'EXPORT' && $btn.closest('tr').data('status').indexOf('END-SUCCESS') >= 0)	{
+					$btn.button({text: false,icons: {primary: "ui-icon-arrowthickstop-1-s"}}).show();
+					$btn.off('click.showDownload').on('click.showDownload',function(event){
+						event.preventDefault();
+app.model.addDispatchToQ({
+	'_cmd':'adminBatchJobDownload',
+	'guid':$btn.closest('tr').data('guid'),
+	'base64' : '1',
+	'_tag':	{
+		'datapointer' : 'adminBatchJobDownload', //big dataset returned. only keep on in memory.
+		'callback' : 'fileDownloadInModal',
+		'extension' : 'admin'
+		}
+	},'mutable');
+app.model.dispatchThis('mutable');
+						
 						});
 					}
 				else	{
-					$btn.hide();
+//btn hidden by default. no action needed.
 					}
+				}, //showDownload
+			
+			adminBatchJobCleanupExec : function($btn)	{
+				var $row = $btn.closest('tr');
+				$btn.show({text: false,icons: {primary: "ui-icon-trash"}});
+				$btn.button(); //daisy-chaining the button on the show didn't work. button didn't get classes.
+				$btn.off('click.adminBatchJobCleanupExec').on('click.adminBatchJobCleanupExec',function(){
+					var jobid = $btn.closest('[data-jobid]').data('jobid');
+					if(jobid)	{
+						$('#batchJobStatusModal').empty().addClass('loadingBG');
+						app.model.addDispatchToQ({
+							'_cmd':'adminBatchJobCleanup',
+							'jobid' : jobid,
+							'_tag':	{
+								'callback':'showMessaging',
+								'message':'Batch job has been cleaned up',
+								'parentID':'batchJobStatus_'+jobid
+								}
+							},'immutable');
+						app.model.dispatchThis('immutable');
+						}
+					else	{
+						$('.appMessaging').anymessage({'message':'In admin_batchJob.e.adminBatchJobCleanupExec, unable to ascertain jobID from DOM tree.','gMessage':true});
+						}
+					});
 				},
 			
 			showBatchDetail : function($btn)	{

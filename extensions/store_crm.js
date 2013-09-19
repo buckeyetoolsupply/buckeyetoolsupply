@@ -165,19 +165,23 @@ obj['softauth'] = "order"; // [OPTIONAL]. if user is logged in, this gets ignore
 
 			onSuccess : function(tagObj)	{
 				var $parent = $('#'+tagObj.parentID);
-				$parent.removeClass('loadingBG');
-				var L = app.data[tagObj.datapointer]['@topics'].length;
-				app.u.dump(" -> L = "+L);
-				var topicID;
-				if(L > 0)	{
-					for(var i = 0; i < L; i += 1)	{
-						topicID = app.data[tagObj.datapointer]['@topics'][i]['TOPIC_ID']
-						app.u.dump(" -> TOPIC ID = "+topicID);
-						$parent.append(app.renderFunctions.transmogrify({'id':topicID,'data-topicid':topicID},tagObj.templateID,app.data[tagObj.datapointer]['@topics'][i]))
+// ** 201336 This prevents FAQ's from being re-appended in the event the user revisits the FAQ page
+				if(!$parent.data('faqs-rendered')){
+					$parent.removeClass('loadingBG');
+					var L = app.data[tagObj.datapointer]['@topics'].length;
+					app.u.dump(" -> L = "+L);
+					var topicID;
+					if(L > 0)	{
+						for(var i = 0; i < L; i += 1)	{
+							topicID = app.data[tagObj.datapointer]['@topics'][i]['TOPIC_ID']
+							app.u.dump(" -> TOPIC ID = "+topicID);
+							$parent.append(app.renderFunctions.transmogrify({'id':topicID,'data-topicid':topicID},tagObj.templateID,app.data[tagObj.datapointer]['@topics'][i]))
+							}
 						}
-					}
-				else	{
-					$parent.append("There are no FAQ at this time.");
+					else	{
+						$parent.append("There are no FAQ at this time.");
+						}
+					$parent.data('faqs-rendered', true);
 					}
 				
 				}
@@ -418,18 +422,17 @@ This is used to get add an array of skus, most likely for a product list.
 				return csvArray;
 				}, //getSkusFromList
 
-			handleChangePassword : function(formID,tagObj)	{
+			handleChangePassword : function($form,tagObj)	{
 				
-$('#'+formID+' .ui-widget-anymessage').empty().remove(); //clear any existing messaging
-var formObj = $('#'+formID).serializeJSON();
+$('.messaging', $form).empty(); //clear any existing messaging
+var formObj = $form.serializeJSON();
 if(app.ext.store_crm.validate.changePassword(formObj)){
 	app.calls.buyerPasswordUpdate.init(formObj.password,tagObj);
 	app.model.dispatchThis('immutable');
 	}
 else{
 	var errObj = app.u.youErrObject("The two passwords do not match.",'42');
-	errObj.parentID = formID
-	app.u.throwMessage(errObj);
+	$(".messaging",$form).anymessage(errObj);
 	}
 				
 				}, //handleChangePassword

@@ -81,7 +81,7 @@ app.globalAjax.lastDispatch - keeps track of when the last dispatch occurs. Not 
 function zoovyModel() {
 	var r = {
 	
-		version : "201320",
+		version : "201336",
 	// --------------------------- GENERAL USE FUNCTIONS --------------------------- \\
 	
 	//pass in a json object and the last item id is returned.
@@ -141,10 +141,12 @@ function zoovyModel() {
 		addDispatchToQ : function(dispatch,QID) {
 //			app.u.dump('BEGIN: addDispatchToQ');
 //			app.u.dump(" -> QID: "+typeof QID);
-//** 201218 -> QID default needs to be before the string check (because a blank value typeof != string.
+//** 201318 -> QID default needs to be before the string check (because a blank value typeof != string.
 			QID = (QID === undefined) ? 'mutable' : QID; //default to the mutable Q, but allow for PDQ to be passed in.
 			var r; // return value.
-			if(dispatch['_cmd'] == 'undefined')	{
+// ** 201330 -> if _cmd wasn't set, this would cause a js error.
+//			if(dispatch['_cmd'] == 'undefined')	{
+			if(dispatch && !dispatch['_cmd'])	{
 				r = false;
 	//			zSTdErr(' -> _cmd not set. return false');
 				}
@@ -157,12 +159,16 @@ function zoovyModel() {
 				app.u.dump("QID: "); app.u.dump(QID);
 				}
 			else	{
+//** 201324 -> 	there was an issue w/ a serialized form object being added directly to the Q (as opposed to going through a .call) and then the form being re-submitted after a correction
+//				but the original dispatch was getting resent instead of the updated command. extend creates a duplicate w/ no pointers. solved the issue.
+// full explanation here: https://github.com/zoovy/AnyCommerce-Development/commit/41396eb5546621c0b31e3273ecc314e686daf4bc
+				var tmp = $.extend(true,{},dispatch); 
 				var uuid = app.model.fetchUUID() //uuid is obtained, not passed in.
-				dispatch["_uuid"] = uuid;
-				dispatch._tag = dispatch._tag || {}; //the following line will error if tag is not an object. define as such if not already defined.
-				dispatch['_tag']["status"] = 'queued';
+				tmp["_uuid"] = uuid;
+				tmp._tag = tmp._tag || {}; //the following line will error if tag is not an object. define as such if not already defined.
+				tmp['_tag']["status"] = 'queued';
 //				dispatch["attempts"] = dispatch["attempts"] === undefined ? 0 : dispatch["attempts"];
-				app.q[QID][uuid] = dispatch;
+				app.q[QID][uuid] = tmp;
 				r = uuid;
 				}
 			return r;
@@ -197,7 +203,7 @@ function zoovyModel() {
 	//go through this backwards so that as items are removed, the changing .length is not impacting any items index that hasn't already been iterated through. 
 			for(var index in app.q[QID]) {
 				
-				app.u.dump(index+"). "+app.q[QID][index]._cmd+" status: "+app.q[QID][index]._tag.status);
+//				app.u.dump(index+"). "+app.q[QID][index]._cmd+" status: "+app.q[QID][index]._tag.status);
 				
 				if(app.q[QID][index]._tag.status == 'queued')	{
 					app.q[QID][index]._tag.status = "requesting";
@@ -390,7 +396,7 @@ can't be added to a 'complete' because the complete callback gets executed after
 			delete app.globalAjax.requests[QID][pipeUUID];
 			app.model.handleCancellations(Q,QID);
 			if(typeof jQuery().hideLoading == 'function'){
-				$(".loading-indicator-overlay").hideLoading(); //kill all 'loading' gfx. otherwise, UI could become unusable.
+				$(".loading-indicator-overlay").parent().hideLoading(); //kill all 'loading' gfx. otherwise, UI could become unusable.
 				}
 //			setTimeout("app.model.dispatchThis('"+QID+"')",1000); //try again. a dispatch is only attempted three times before it errors out.
 			}
@@ -398,7 +404,7 @@ can't be added to a 'complete' because the complete callback gets executed after
 
 	app.globalAjax.requests[QID][pipeUUID].success(function(d)	{
 		delete app.globalAjax.requests[QID][pipeUUID];
-		app.model.handleResponse(d);
+		app.model.handleResponse(d,QID);
 			}
 		)
 	r = pipeUUID; //return the pipe uuid so that a request can be cancelled if need be.
@@ -517,14 +523,14 @@ set adjustAttempts to true to increment by 1.
 QID is the dispatchQ ID (either passive, mutable or immutable. required for the handleReQ function.
 	*/
 	
-		handleResponse : function(responseData)	{
+		handleResponse : function(responseData,QID)	{
 //			app.u.dump('BEGIN model.handleResponse.');
 			
 //if the request was not-pipelined or the 'parent' pipeline request contains errors, this would get executed.
 //the handlereq function manages the error handling as well.
 			if(responseData && !$.isEmptyObject(responseData))	{
 				var uuid = responseData['_uuid'];
-				var QID = this.whichQAmIFrom(uuid); //don't pass QID in. referenced var that could change before this block is executed.
+				var QID = QID || this.whichQAmIFrom(uuid); //don't pass QID in. referenced var that could change before this block is executed.
 //				app.u.dump(" -> responseData is set. UUID: "+uuid);
 //if the error is on the parent/piped request, no qid will be set.
 //if an iseerr occurs, than even in a pipelined request, errid will be returned on 'parent' and no individual responses are returned.
@@ -557,6 +563,9 @@ QID is the dispatchQ ID (either passive, mutable or immutable. required for the 
 //still unable to determine Q. throw some generic error message along with response error.
 							app.u.dump("ERROR! a high level error occured and the Q ID was unable to be determined.");
 							app.u.throwMessage(responseData);
+							if(typeof jQuery().hideLoading == 'function'){
+								$(".loading-indicator-overlay").parent().hideLoading(); //kill all 'loading' gfx. otherwise, UI could become unusable.
+								}
 							}
 						}
 					}
@@ -700,7 +709,7 @@ QID is the dispatchQ ID (either passive, mutable or immutable. required for the 
 			var datapointer = null; //a callback can be set with no datapointer.
 			var status = null; //status of request. will get set to 'error' or 'completed' later. set to null by defualt to track cases when not set to error or completed.
 			var hasErrors = app.model.responseHasErrors(responseData);
-			app.u.dump(" -> handleresponse "+responseData._rcmd+" uuid: "+uuid+" and hasErrors: "+hasErrors);
+//			app.u.dump(" -> handleresponse "+responseData._rcmd+" uuid: "+uuid+" and hasErrors: "+hasErrors);
 //			app.u.dump(" -> responseData:"); app.u.dump(responseData);
 
 			if(!$.isEmptyObject(responseData['_rtag']) && app.u.isSet(responseData['_rtag']['callback']))	{
@@ -778,10 +787,12 @@ uuid is more useful because on a high level error, rtag isn't passed back in res
 			else	{
 				status = 'completed';
 				if(typeof callback == 'function')	{
-					callback(responseData._rtag);
+// * 201334 -> responses contain macro-specific messaging. some or all of these may be success or fail, but the response is still considered a success.
+					
+					callback(responseData._rtag,{'@RESPONSES':responseData['@RESPONSES']});
 					}
 				else if(typeof callback == 'object' && typeof callback.onSuccess == 'function')	{
-					callback.onSuccess(responseData['_rtag']); //executes the onSuccess for the callback
+					callback.onSuccess(responseData['_rtag'],{'@RESPONSES':responseData['@RESPONSES']}); //executes the onSuccess for the callback
 					}
 				else{
 					app.u.dump(' -> successful response for uuid '+uuid+'. callback defined ('+callback+') but does not exist or is not valid type.')
@@ -798,7 +809,7 @@ uuid is more useful because on a high level error, rtag isn't passed back in res
 		handleResponse_adminOrderCreate : function(responseData)	{
 			this.handleResponse_cartOrderCreate(responseData); //share the same actions. append as needed.
 			},
-	
+
 		handleResponse_authNewAccountCreate : function(responseData)	{
 			app.model.handleResponse_authAdminLogin(responseData); //this will have the same response as a login if successful.
 			},
@@ -818,10 +829,11 @@ uuid is more useful because on a high level error, rtag isn't passed back in res
 			return responseData.orderid;
 			}, //handleResponse_cartOrderCreate
 	
-	
+/*
+** 201334 --> removed.  path is now returned on the root level.
 //no special error handling or anything like that.  this is just here to get the category safe id into the response for easy reference.	
-		handleResponse_appCategoryDetail : function(responseData)	{
-//			app.u.dump("BEGIN model.handleResponse_appCategoryDetail");
+		handleResponse_appNavcatDetail : function(responseData)	{
+//			app.u.dump("BEGIN model.handleResponse_appNavcatDetail");
 //save detail into response to make it easier to see what level of data has been requested during a fetch or call
 			if(responseData['_rtag'] && responseData['_rtag'].detail){
 				responseData.detail = responseData['_rtag'].detail;
@@ -834,8 +846,22 @@ uuid is more useful because on a high level error, rtag isn't passed back in res
 			app.model.handleResponse_defaultAction(responseData);
 			return responseData.id;
 			}, //handleResponse_categoryDetail
-
-
+		
+		handleResponse_appNavcatDetail : function(responseData)	{
+//			app.u.dump("BEGIN model.handleResponse_appNavcatDetail");
+//save detail into response to make it easier to see what level of data has been requested during a fetch or call
+			if(responseData['_rtag'] && responseData['_rtag'].detail){
+				responseData.detail = responseData['_rtag'].detail;
+				}
+			if(responseData['@products'] && !$.isEmptyObject(responseData['@products']))	{
+				responseData['@products'] = $.grep(responseData['@products'],function(n){return(n);}); //strip blanks
+				}
+			if(responseData['_rtag'] && responseData['_rtag'].datapointer)
+				responseData.id = responseData['_rtag'].datapointer.split('|')[1]; //safe id into data for easy reference.
+			app.model.handleResponse_defaultAction(responseData);
+			return responseData.id;
+			}, //handleResponse_appNavcatDetail
+*/
 /*
 It is possible that multiple requests for page content could come in for the same page at different times.
 so to ensure saving to appPageGet|.safe doesn't save over previously requested data, we extend it the ['%page'] object.
@@ -927,7 +953,15 @@ or as a series of messages (_msg_X_id) where X is incremented depending on the n
 							responseData['errmsg'] = "could not find product "+responseData.pid+". Product may no longer exist. ";
 							} //db:id will not be set if invalid sku was passed.
 						break;
-					case 'appCategoryDetail':
+					case 'adminEBAYProfileDetail':
+//					app.u.dump("GOT HERE!@!!!!!!!!!!!!!!!"); app.u.dump(responseData);
+						if(!responseData['%PROFILE'] || !responseData['%PROFILE'].PROFILE)	{
+							r = true;
+							responseData['errid'] = "MVC-M-300";
+							responseData['errtype'] = "apperr"; 
+							responseData['errmsg'] = "profile came back either without %PROFILE or without %PROFILE.PROFILE.";
+							}
+					case 'appNavcatDetail':
 						if(responseData.errid > 0 || responseData['exists'] == 0)	{
 							r = true
 							responseData['errid'] = "MVC-M-200";
@@ -952,6 +986,16 @@ or as a series of messages (_msg_X_id) where X is incremented depending on the n
 					default:
 						if(Number(responseData['errid']) > 0) {r = true;}
 						else if(Number(responseData['_msgs']) > 0 && responseData['_msg_1_id'] > 0)	{r = true} //chances are, this is an error. may need tuning later.
+// *** 201336 -> mostly impacts admin UI. @MSGS is another mechanism for alerts that needs to be checked.
+						else if(responseData['@MSGS'] && responseData['@MSGS'].length)	{
+							var L = responseData['@MSGS'].length;
+							for(var i = 0; i < L; i += 1)	{
+								if(responseData['@MSGS'][i]['!'] == 'ERROR')	{
+									r = true;
+									break; //if we have an error, exit early.
+									}
+								}
+							}
 						else if(responseData['@RESPONSES'] && responseData['@RESPONSES'].length)	{
 							var L = responseData['@RESPONSES'].length;
 							for(var i = 0; i < L; i += 1)	{
@@ -1479,7 +1523,7 @@ only one extension was getting loaded, but it got loaded for each iteration in t
 
 		executeExtensionCallback : function(namespace,callback)	{
 			if(namespace && callback)	{
-				if(typeof callback == 'function'){window[callback]()}
+				if(typeof callback == 'function'){callback()}
 				else if(typeof callback == 'string' && typeof app.ext[namespace] == 'object' && typeof app.ext[namespace].callbacks[callback] == 'object')	{
 					app.ext[namespace].callbacks[callback].onSuccess()
 					}

@@ -1,6 +1,6 @@
 @font-face	{
 	font-family: barcode3of9;
-	src: url('resources/z3of9.ttf') /* will not work in IE9 w/out eot font file */
+	src: url('fonts/z3of9.ttf') /* will not work in IE9 w/out eot font file */
 	} 
 
 body {line-height: 1;} /* helps to reduce some errant whitespace issues */
@@ -9,7 +9,6 @@ body	{margin:0; padding:0; background:#f1f1f1; }
 body, html	{font-size:100%; font-family:Tahoma, Geneva, sans-serif; color:#565656;height:100%; margin:0; padding:0;} /* height is for showLoading on body */
 
 img {border:0px;}
-
 
 /*
 items that are floated may cause their containers to 'shrink'. apply this class to the container
@@ -28,6 +27,8 @@ class can also be applied to a 1 item per row list.
 .floatRight	{float:right;}
 .clearBoth	{clear:both;}
 
+.displayInlineBlock	{display:inline-block;}
+
 .alignRight	{text-align:right;}
 .alignLeft	{text-align:left;}
 .alignCenter	{text-align:center;}
@@ -36,17 +37,19 @@ class can also be applied to a 1 item per row list.
 .valignTop	{vertical-align:top;}
 .valignMiddle	{vertical-align:middle;}
 
-
 .displayNone,
 .labelsAsBreaks label.displayNone,
 .labelsAsBreaks .label.displayNone,
 .debug,
 .showForZoovyOnly,
 .showForAnyCommerceOnly,
+.conditionalHide, /* a generic class used for hiding/unhiding based on when specific conditions are met */
 .detailMode .hideInDetailMode,
 .minimalMode .hideInMinimalMode 	{display:none;}
 
 .isZoovy .showForZoovyOnly, .isAnyCommerce .showForAnyCommerceOnly	{display:inherit;}
+.conditionMet .conditionalHide	{display:block;}
+.conditionMet span.conditionalHide	{display:inline-block;}
 
 /* for use on lists where no bullets, indents, etc are needed. add on ul */
 /* .plainList	{margin:0; padding:0; list-style:none;} - deprecated. use list classes below */
@@ -97,6 +100,7 @@ h5,h6	{font-size: 1em; margin: 0px 0px 3px 0px; font-weight: bold;}
 
 
 .hint, .helper	{font-size:.75em;} /* NOTE - 'hint' is reserved. change these to help as you come across them */
+.small	{font-size:.85em;}
 
 
 
@@ -163,6 +167,7 @@ If less is needed, use increments of 4
 */
 
 .noPadOrMargin	{padding:0; margin:0;}
+.paddingNone {padding:0;}
 
 
 /*
@@ -176,13 +181,13 @@ using these shared margins will help make the UI more consistent.
 .marginLeft	{margin-left:12px;}
 .marginRight	{margin-right:12px;}
 .marginTop	{margin-top:12px;}
-.marginBottom	{margin-bottom:12px;}
+.marginBottom	{margin-bottom:12px !important;}
 
 .paddingRight	{padding-right:12px;} /* used to create space between horizontally listed spans, among other things */
 
 .stdMargin	{margin:12px;}
-.stdPadding	{padding:12px;}
-.smallPadding	{padding:4px !important;}
+.stdPadding, .ui-widget .stdPadding	{padding:12px;}
+.smallPadding, .ui-widget .smallPadding	{padding:4px !important;}
 .ui-widget-header-padding	{padding:3px 6px !important;}
 section.marginBottom	{margin-bottom:36px;} /* use on a section tag to divide portions of the page. */
 
@@ -190,6 +195,9 @@ section.marginBottom	{margin-bottom:36px;} /* use on a section tag to divide por
 	-webkit-border-radius: 0px;
 	border-radius: 0px; 	
 	}
+
+
+
 
 /* 
 LIST CLASSES
@@ -200,6 +208,9 @@ if you want the list responsive, apply the .fluidList class.
 .listStyleNone, .listStyleNone li	{list-style:none;} /* apply to a ul or ol */
 .fluidList li	{float:left; margin:12px; padding:0; display:inline-block;}
 
+/* in a list, when one item is 'selected' (such as the ebay category chooser), apply this class to indicate. */
+.activeListItem, .activeListItem.lookLikeLink	{color:#333333;}
+.activeListItem:before	{content: "\00bb "; font-weight:bold;} /* &#187 / double arrow icon */
 
 
 .minHeight100	{min-height:100px;} /* apply onto elements that will have showloading run on them if they're empty.
@@ -212,8 +223,13 @@ if you want the list responsive, apply the .fluidList class.
 
 /* for non-datagrid tables. ex: setup page. */
 table.stdCellSpacing	{border-spacing: 12px; border-collapse: separate;} 
+td.width1	{width:1%;}
 
-table.fullWidth, iframe.fullWidth, textarea.fullWidth	{width:100%;}
+/* 201336 -> removed limitations by type so any element could use this class */
+/* table.fullWidth, iframe.fullWidth, textarea.fullWidth	{width:100%;}*/
+.fullWidth	{width:100%;}
+
+
 iframe.noBorders	{overflow:hidden; border:none;}
 
 iframe.ad-300x250	{height:250px;}
@@ -229,7 +245,7 @@ Use this in a table where you want clear separation between rows and cells. This
 .gridTable tr.ui-state-highlight	{background: inherit !important;}
 .gridTable tr.ui-state-highlight	{background: inherit !important;}
 
-.gridTable th, .gridTable .tf	{background:#cccccc;}
+.gridTable th, .gridTable .tf	{background:#efefef; text-align:left;}
 
 .gridTable tr.alert {background:#ffc8c8;}
 .gridTable tr.warning {background:#fbf9dc;}
@@ -237,6 +253,11 @@ Use this in a table where you want clear separation between rows and cells. This
 
 
 
+
+/*   product/customer picker */
+
+/* apply a max height for picker accordion content, but only when it's in a dialog. no constraints needed in the body (in general). */
+.ui-dialog-content .pickerAccordionContainer .ui-accordion-content	{max-height:200px; overflow:auto;}
 
 
 
@@ -277,7 +298,7 @@ li.loadingBG, tr.loadingBG	{background:url(images/wait.gif) no-repeat center cen
 .ui-widget-buttonbar button	{margin:0 2px;}
 
 .ui-widget fieldset	{border:0;}
-.ui-widget h1  {font-size:1.6em; color:#000000; font-weight:bold; 	margin: 0; padding: 0;} /* Used for the page title element */
+.ui-widget h1  {font-size:1.6em; color:#000000; font-weight:bold; margin: 0; padding: 0;} /* Used for the page title element */
 
 /* used for the wiki header 1 & 2 */
 .ui-widget h2	{font-size:1.4em; font-weight:bold; margin: 0; padding: 0;}
@@ -290,9 +311,6 @@ li.loadingBG, tr.loadingBG	{background:url(images/wait.gif) no-repeat center cen
 #headerSearchFrm legend {display:none;}
 #headerSearchFrm fieldset	{text-align:right}
 #headerKeywordsInput	{width:350px;}
-
-
-
 
 
 
@@ -753,6 +771,9 @@ ICON LIBRARY
 
 
 
+
+
+
 /* css for a three column layout. will be used on dashboard and in customer editor. */
 
 
@@ -770,13 +791,15 @@ ICON LIBRARY
 	background: #ffffff;  
 	}  
 
-.threeColumn	{width:31%; margin:0 1%;}
+.threeColumn	{width:31%; margin:0 2% 0 0; padding:0;}
 
 /* for a three column layout, where two columns are Narrow and one is Wide (NW) */
 .nwColumnN	{width:19%;}
 .nwColumnW	{width:60%;}
 
 
+.width20	{width:20%;}
+.width75	{width:75%;}
 
 
 /* dual-level css menu. used for multipage 'pages' in prodlists (finder) */
@@ -877,16 +900,36 @@ NOTE - the overflow hidden on headerTop and the display inlineblock/width are to
 .mhTabsContainer .toggleArrow	{width:1%;}
 
 .mhTabsContainer ul.navIcons	{max-width:1150px;} /* as the browser gets very wide, the icon/tabs don't look as good stretched out. cap em */
-.mhTabsContainer ul.showIcons .icon	{display:block; float:right;}
+.mhTabsContainer ul.showIcons .icon	{
+	/* display:block; */
+	float:right;}
 .mhTabsContainer ul.showIcons li	{height:55px;}
 .mhTabsContainer ul.hideIcons .icon	{display:none;}
+.mhTabsContainer ul.hideIcons .animIcon	{display:none;}
+.mhTabsContainer ul.hideIcons .animator{display:none;}
 .mhTabsContainer ul.hideIcons li	{height:20px;}
 
 .mhTabsContainer .text	{position:relative; z-index:10;}
-.mhTabsContainer .icon	{background-image:url(images/tab_sprites-1000x250.png); background-repeat:no-repeat; position:absolute; bottom:0; right:0; height:55px; width:55px; z-index:9;}
-.mhTabsContainer .setupTab .icon	{} /* uses default position 0,0 */
+.mhTabsContainer .icon	{display: none; background-image:url(images/tab_sprites_v2-1000x250.png); background-repeat:no-repeat; position:absolute; bottom:0; right:0; height:55px; width:55px; z-index:9;}
+.mhTabsContainer .active .animIcon	{display: none;} 
+.mhTabsContainer .animIcon	{background-repeat:no-repeat; position:absolute; z-index:9;}
+.mhTabsContainer .animator {left: 0px; width: 92px; height: 55px; position: absolute; z-index: 10;}
+
+.mhTabsContainer .setupTab .animIcon	{bottom:0; right:0; height:55px; width:55px;} 
+.mhTabsContainer .sitesTab .animIcon	{width:42px; height:32px; bottom: 10px; right: 6px;}
+.mhTabsContainer .productTab .animIcon	{width:45px; height:39px; bottom: 0px; right: 5px;}
+.mhTabsContainer .ordersTab .animIcon	{width:61px; height:42px; bottom: 6px; right: 0px;}
+.mhTabsContainer .crmTab .animIcon	{width:62px; height:36px; bottom: 10px; right: 0px;}
+.mhTabsContainer .syndicationTab .animIcon	{width:60px; height:39px; bottom: 8px; right: 0px;}
+.mhTabsContainer .reportsTab .animIcon	{width:33px; height:39px; bottom: 10px; right: 6px;}
+.mhTabsContainer .kpiTab .animIcon	{width:41px; height:42px; bottom: 6px; right: 6px;}
+.mhTabsContainer .utilitiesTab .animIcon	{width:53px; height:53px; bottom: 1px; right: 1px;}
+.mhTabsContainer .supportTab .animIcon	{width:38px; height:38px; bottom: 8px; right: 8px;}
+.mhTabsContainer .messagesTab .animIcon	{width:45px; height:45px; bottom: 5px; right: 5px;}
+/*
+.mhTabsContainer .setupTab .icon	{} /* uses default position 0,0 //reminder close this comment
 .mhTabsContainer .sitesTab .icon	{background-position: -55px 0;}
-.mhTabsContainer .productsTab .icon	{background-position: -110px 0;}
+.mhTabsContainer .productTab .icon	{background-position: -110px 0;}
 .mhTabsContainer .ordersTab .icon	{background-position: -165px 0;}
 .mhTabsContainer .crmTab .icon	{background-position: -220px 0;}
 .mhTabsContainer .syndicationTab .icon	{background-position: -275px 0;}
@@ -894,18 +937,18 @@ NOTE - the overflow hidden on headerTop and the display inlineblock/width are to
 .mhTabsContainer .kpiTab .icon	{background-position: -385px 0;}
 .mhTabsContainer .utilitiesTab .icon	{background-position: -440px 0;}
 .mhTabsContainer .supportTab .icon	{background-position: -495px 0;}
+*/
 
-
-.mhTabsContainer .setupTab.active .icon	{background-position: 0px -55px;} /* uses default position 0,0 */
-.mhTabsContainer .sitesTab.active .icon	{background-position: -55px -55px;}
-.mhTabsContainer .productsTab.active .icon	{background-position: -110px -55px;}
-.mhTabsContainer .ordersTab.active .icon	{background-position: -165px -55px;}
-.mhTabsContainer .crmTab.active .icon	{background-position: -220px -55px;}
-.mhTabsContainer .syndicationTab.active .icon	{background-position: -275px -55px;}
-.mhTabsContainer .reportsTab.active .icon	{background-position: -330px -55px;}
-.mhTabsContainer .kpiTab.active .icon	{background-position: -385px -55px;}
-.mhTabsContainer .utilitiesTab.active .icon	{background-position: -440px -55px;}
-.mhTabsContainer .supportTab.active .icon	{background-position: -495px -55px;}
+.mhTabsContainer .setupTab.active .icon	{display: block; background-position: 0px -55px;} /* uses default position 0,0 */
+.mhTabsContainer .sitesTab.active .icon	{display: block; background-position: -55px -55px;}
+.mhTabsContainer .productTab.active .icon	{display: block; background-position: -110px -55px;}
+.mhTabsContainer .ordersTab.active .icon	{display: block; background-position: -165px -55px;}
+.mhTabsContainer .crmTab.active .icon	{display: block; background-position: -220px -55px;}
+.mhTabsContainer .syndicationTab.active .icon	{display: block; background-position: -275px -55px;}
+.mhTabsContainer .reportsTab.active .icon	{display: block; background-position: -330px -55px;}
+.mhTabsContainer .kpiTab.active .icon	{display: block; background-position: -385px -55px;}
+.mhTabsContainer .utilitiesTab.active .icon	{display: block; background-position: -440px -55px;}
+.mhTabsContainer .supportTab.active .icon	{display: block; background-position: -495px -55px;}
 
 
 .mhTabsContainer .messageCount	{
@@ -1307,9 +1350,68 @@ see shipping panel in product editor for example
 .alignedInputs select	{max-width:55%;} /* shrink to fit widest option, but stay under threshold */
 
 
+/* SITES TAB */
+
+.domainPanel	{
+	-webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+	-moz-box-sizing: border-box;    /* Firefox, other Gecko */
+	box-sizing: border-box;         /* Opera/IE 8+ */
+	float:left;
+	margin:1%;
+	padding:12px;
+	width:29%;
+	}
 
 
 
+
+
+
+
+
+
+
+
+
+/* CAMPAIGN MANAGER */
+.campaignPlatformIcons span {float:left; margin-right:4px;}
+
+#templateEditor .ToolBar	{
+	position:relative;
+	z-index:15;
+	}
+/* this applies clearfix */
+#templateEditor .ToolBar:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+	}
+#wizardForm fieldset div	{margin-bottom:12px;}
+
+
+#templateEditor .templatePreviewContainer {position:relative;}
+#templateEditor .device{position:absolute; top:0; left:0;} /* applied to all the 'device' backgrounds. */
+/* device-specific class added to a 'device' div and also the parent container that holds both the iframe and the .device */
+
+#templateEditor .device	{z-index:10;}
+#templateEditor iframe	{border:0px; z-index:21; position:relative;} /* in device specific mode, position is changed to absolute. */
+
+#templateEditor .iphone5 .device	{background:url(images/devices/iphone5.jpg) no-repeat; height:798px; width:385px;}
+#templateEditor .iphone5 .device.landscape	{top:-175px; left:180px;} /* correct device image placement */
+
+#templateEditor .iphone5 iframe.portrait	{top:134px; left:33px; position:absolute;}
+#templateEditor .iphone5 iframe.landscape	{top:60px; left:90px; position:absolute;}
+
+
+#templateEditor .templatePreviewContainer div.landscape	{
+	/* for firefox, safari, chrome, etc. */
+	-webkit-transform: rotate(-90deg);
+	-moz-transform: rotate(-90deg);
+	/* for ie */
+	filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);	
+	}
 
 /* landing page (aka recent news) */
 
@@ -1384,6 +1486,7 @@ ex of cbc, hint and caution: search 'product' and open 'product edit'
 
 /*
 REPORTING -> KPI
+wasn't enough css to justify a separate .css file. If this content grows, move to extensions/admin/reports.css
 */
 ul.kpiSortable	{width:250px; min-height:200px; max-height:250px; overflow:auto; list-style:none; margin:0; padding:0;}
 ul.kpiSortable li	{padding:6px; border-bottom:1px solid #ccc;}
@@ -1400,6 +1503,37 @@ ul.kpiSortable li:last-child	{border-bottom:0;}
 	}
 
 
+
+
+/*
+Account utilities / support tools
+*/
+.objectInspector .objectInspector li {padding:4px;}
+.objectInspector .objectInspector li:nth-child(even)	{background-color:#efefef;}
+.objectInspector .objectInspector li:nth-child(odd)	{background-color:#ffffff;}
+.objectInspector .prompt {
+    display: inline-block;
+    width: 250px;
+	}
+
+
+.flexeditMasterListContainer .hideInMasterList	{display:none;} /* these fields will become visible once dragged over to the enabled column */
+
+
+
+
+
+/*
+SYNDICATION
+wasn't enough css to justify a separate .css file. If this content grows, move to extensions/admin/syndication.css
+*/
+
+.ebayCategoryChooser .leftCol	{width:25%;}
+.ebayCategoryChooser .leftCol li	{margin:3px 0 3px 0}
+
+
+.pageSyndication .market	{border:1px solid #ffffff; padding:8px;}
+.pageSyndication .selectedMarket	{border:1px solid #efefef;}
 
 /*
 http://codepad.co/s/7cca38#select

@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-<title>Zoovy.com - Administrative Interface Login</title>
+<title>Administrative Interface Login</title>
 
 <META HTTP-EQUIV="Pragma" CONTENT="no-cache"><!-- don't cache this file. -->
 <META NAME="ROBOTS" CONTENT="NONE">
@@ -26,7 +26,7 @@ else {
 
 var app = {vars:{
 	/////////////////////////////////\
-	"release":"201320.h",   ///|> Increment this with each change. model version followed by each deployed update getting a new letter in the alphabet.
+	"release":"201336.e",   ///|> Increment this with each change. model version followed by each deployed update getting a new letter in the alphabet.
 	//////////////////////////////////
 	"thisSessionIsAdmin": true,
 	"_clientid":"admin",
@@ -43,7 +43,8 @@ all css includes need to be after the js that changes the base url.
 css files should be included before any .js file to ensure they are downloaded in parallel
 -->
 
-<link rel="stylesheet" type="text/css" href="app-admin/jquery-ui-1.9.2.custom.min.css" />
+<!-- <link rel="stylesheet" type="text/css" href="app-admin/jquery-ui-1.9.2.custom.min.css" /> -->
+<link rel="stylesheet" type="text/css" href="app-admin/jquery-ui-1.10.3.custom.css" />
 <link rel="STYLESHEET" type="text/css" href="app-admin/standard.css" /><!-- legacy compat css. goal is to be rid of this file -->
 <link rel="STYLESHEET" type="text/css" href="app-admin/styles.css" /><!-- lots of UI specific styles. load early to avoid popping -->
 
@@ -53,9 +54,11 @@ css files should be included before any .js file to ensure they are downloaded i
 <script src="extensions/admin/resources/load-image.min.js"></script><!-- required for media lib. loading in extension causes issues. -->
 
 
-<!-- not much is going to run without these two. load em early -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+<!-- not much is going to run without these two. load em early
+ pre 201324 -> 	1.9.1/jquery.min.js and 1.9.2/jquery-ui.min.js
+ -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 
 <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
 
@@ -135,7 +138,7 @@ app.u.loadScript(app.vars.baseURL+"app-admin-init.js");
 <!--			<button class='floatRight' data-app-event="admin|showPasswordRecover">Recover Password</button> -->
 			<div class="hint">App Release #: <span id="appversion">??</span></div>
 			<label class='hint'><input type='checkbox' name='persistentAuth' value='1' checked='checked' /> Keep me logged in</label>
-			<div class="hint"><b><a href='/app/201318/app-admin.html'> &#187; Use previous version</a></b></div>
+			<div class="hint"><b><a href='/app/201334/app-admin.html'> &#187; Use previous version</a></b></div>
 
 		</fieldset>
 		</form>
@@ -187,8 +190,9 @@ app.u.loadScript(app.vars.baseURL+"app-admin-init.js");
 		<div class='headerTop'>
 			<div class='logo pointer alignCenter' onClick="navigateTo('#!dashboard');" title='home'><img src='app-admin/images/zoovy_logo-173x30.png' width='173' height='30' alt='zoovy' /></div>
 			<div class='menu floatRight'>
-				<span class='pointer lookLikeLink showForZoovyOnly' onClick="return navigateTo('/biz/downloads/index.cgi');" title='Use our windows clients for managing orders and product'>Downloads</span>
-				| <span class='pointer lookLikeLink' onClick="showUI('#!help',{'tab':'support'})">Help</span>
+				<span class='pointer lookLikeLink showForZoovyOnly' onClick="return navigateTo('#!downloads');" title='Use our windows clients for managing orders and product'>Downloads</span>
+				| <span class='pointer lookLikeLink' onClick="return navigateTo('#!help',{'tab':'support'})">Help</span>
+				| <span class='pointer lookLikeLink' onClick="return navigateTo('#!showPlatformInfo')">About</span>
 				| <span class='pointer lookLikeLink' onClick="return navigateTo('#!taskManager');" title='view and edit your task list'>Tasks</span>
 				| <span class='pointer lookLikeLink' onClick="app.ext.admin.a.logout(); return false;" title='log out of your account' >Exit</span>
 			</div>
@@ -202,18 +206,73 @@ app.u.loadScript(app.vars.baseURL+"app-admin-init.js");
 		<div class='mhTabsContainer'>
 		<ul class='showIcons navIcons'>
 			<li class='toggleArrow alignCenter' onClick="app.ext.admin.a.toggleHeaderTabHeight()" title='Toggle this menu to be taller or shorter'>&#9650;</li>
-			<li class='setupTab' onClick="navigateTo('#:setup');"><span class='text'>Setup</span><span class='icon'></span></li>
-			<li class='sitesTab' onClick="navigateTo('#:sites');"><span class='text'>Sites</span><span class='icon'></span></li>
-			<li class='productsTab' onClick="navigateTo('#:product');"><span class='text'>Products</span><span class='icon'></span></li>
-			<li class='ordersTab' onClick="navigateTo('#:orders');"><span class='text'>Orders</span><span class='icon'></span></li>
-			<li class='crmTab' onClick="navigateTo('#:crm');"><span class='text'>CRM</span><span class='icon'></span></li>
-			<li class='syndicationTab' onClick="navigateTo('#:syndication');"><span class='text'>Syndication</span><span class='icon'></span></li>
-			<li class='reportsTab' onClick="navigateTo('#:reports');"><span class='text'>Reports</span><span class='icon'></span></li>
-			<li class='kpiTab' onClick="navigateTo('#:kpi');"><span class='text'>KPI</span><span class='icon'></span></li>
-			<li class='utilitiesTab' onClick="navigateTo('#:utilities');"><span class='text'>Utilities</span><span class='icon'></span></li>
+			<li class='setupTab' onClick="navigateTo('#:setup');">
+				<span class='text'>Setup</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="setup?animFunc=fwd" data-animation-mouseout="setup?animFunc=back"></span>
+				<span class='animIcon' data-animation="setup?imgsrc=app-admin/images/header_anime/setup_sprite.png&frameCount=16&startFrame=0&width=55&height=55&x1=70&y=0&frameDur=60" ></span>
+			</li>
+			<li class='sitesTab' onClick="navigateTo('#:sites');">
+				<span class='text'>Sites</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="sites?animFunc=loop" data-animation-mouseout="sites?animFunc=stop&animCallback=goToFirstFrame"></span>
+				<span class='animIcon' data-animation="sites?imgsrc=app-admin/images/header_anime/sites_sprite.png&frameCount=16&startFrame=0&width=42&height=32&xGap=5&x1=70&y=0&frameDur=120" ></span>
+			</li>
+			<li class='productTab' onClick="navigateTo('#:product');">
+				<span class='text'>Product</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="products?animFunc=loop" data-animation-mouseout="products?animFunc=stop&animCallback=goToFirstFrame"></span>
+				<span class='animIcon' data-animation="products?imgsrc=app-admin/images/header_anime/products_sprite.png&frameCount=15&startFrame=0&width=45&height=39&xGap=5&x1=70&y=0&frameDur=120" ></span>
+			</li>
+			<li class='ordersTab' onClick="navigateTo('#:orders');">
+				<span class='text'>Orders</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="orders?animFunc=fwd&start=0"></span>
+				<span class='animIcon' data-animation="orders?imgsrc=app-admin/images/header_anime/orders_sprite.png&frameCount=13&startFrame=12&width=61&height=42&xGap=5&x1=70&y=0&frameDur=60" ></span>
+			</li>
+			<li class='crmTab' onClick="navigateTo('#:crm');">
+				<span class='text'>CRM</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="crm?animFunc=fwd" data-animation-mouseout="crm?animFunc=back"></span>
+				<span class='animIcon' data-animation="crm?imgsrc=app-admin/images/header_anime/crm_sprite.png&frameCount=16&startFrame=0&width=62&height=36&xGap=5&x1=65&y=0&frameDur=60" ></span>
+			</li>
+			<li class='syndicationTab' onClick="navigateTo('#:syndication');">
+				<span class='text'>Marketplaces</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="marketplaces?animFunc=fwd&start=0"></span>
+				<span class='animIcon' data-animation="marketplaces?imgsrc=app-admin/images/header_anime/marketplaces_sprite.png&frameCount=15&startFrame=14&width=60&height=39&xGap=5&x1=70&y=0&frameDur=60"></span>
+			</li>
+			<li class='reportsTab' onClick="navigateTo('#:reports');">
+				<span class='text'>Reports</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="reports?animFunc=fwd&start=0"></span>
+				<span class='animIcon' data-animation="reports?imgsrc=app-admin/images/header_anime/reports_sprite.png&frameCount=15&startFrame=14&width=33&height=39&xGap=5&x1=70&y=0&frameDur=60" ></span>
+			</li>
+			<li class='kpiTab' onClick="navigateTo('#:kpi');">
+				<span class='text'>KPI</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="kpi?animFunc=loop&start=0" data-animation-mouseout="kpi?animFunc=stop&animCallback=goToFirstFrame" ></span>
+				<span class='animIcon' data-animation="kpi?imgsrc=app-admin/images/header_anime/kpi_sprite.png&frameCount=33&startFrame=0&width=41&height=32&xGap=5&x1=70&y=0&frameDur=60" ></span>
+			</li>
+			<li class='utilitiesTab' onClick="navigateTo('#:utilities');">
+				<span class='text'>Utilities</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="utilities?animFunc=fwd" data-animation-mouseout="utilities?animFunc=back"></span>
+				<span class='animIcon' data-animation="utilities?imgsrc=app-admin/images/header_anime/utilities_sprite.png&frameCount=15&startFrame=0&width=53&height=53&xGap=5&x1=70&y=0&frameDur=60" ></span>
+			</li>
 <!--			<li class='supportTab' onClick="navigateTo('/biz/support/index.cgi');"><span class='text'>Support</span><span class='icon'></span></li> -->
-			<li class='supportTab' onClick="navigateTo('#!support',{'tab':'support'});"><span class='text'>Support</span><span class='icon'></span></li>
-			<li class='messagesTab' onClick="app.ext.admin.u.toggleMessagePane();"><span class='text'>Messages</span><span class='messageCount'></span></li>
+			<li class='supportTab' onClick="navigateTo('#!support',{'tab':'support'});">
+				<span class='text'>Support</span>
+				<span class='icon'></span>
+				<span class="animator" data-animation-mouseenter="support?animFunc=fwd" data-animation-mouseout="support?animFunc=back"></span>
+				<span class='animIcon' data-animation="support?imgsrc=app-admin/images/header_anime/support_sprite.png&frameCount=15&startFrame=0&width=38&height=38&xGap=5&x1=70&y=0&frameDur=60" ></span>
+			</li>
+			<li class='messagesTab' onClick="app.ext.admin.u.toggleMessagePane();">
+				<span class='text'>Messages</span>
+				<span class='messageCount'></span>
+				<span class="animator" data-animation-mouseenter="messages?animFunc=fwd" data-animation-mouseout="messages?animFunc=back"></span>
+				<span class='animIcon' data-animation="messages?imgsrc=app-admin/images/header_anime/messages_sprite.png&frameCount=15&startFrame=0&width=45&height=45&xGap=5&x1=70&y=0&frameDur=60" ></span>
+			</li>
 		</ul>
 		<div id='messagesContent' class='displayNone'>
 			<button onClick="app.ext.admin.u.toggleMessagePane();" class='floatRight' id='closePanelButton'>Close Message Panel</button>
@@ -226,7 +285,7 @@ app.u.loadScript(app.vars.baseURL+"app-admin-init.js");
 			<div class='messageDetail'></div>
 		</div>
 		</div>
-		<div id='navTabs'></div>
+		<div id='navTabs' class='positionRelative'></div>
 		<div id='breadcrumb'></div>
 	</div><!-- /mastHead -->
 	
@@ -354,53 +413,31 @@ These two pieces of data are used for mapping after the uploads to set what fold
 <div id='debugPanel' class='ui-widget ui-widget-content ui-corner-all smallPadding displayNone'>
 <h5>Debugificator</h5>
 <ul class='debugMenu'>
-	<li><a href='#'>Tools</a>
-	<ul>
-		<li><a href='#' onClick="app.ext.admin.u.selectivelyNukeLocalStorage(); return false;">Selectively Clear LocalStorage (keep login &amp; preferences)</a></li>
-		<li><a href='#' onClick="localStorage.clear(); return false;">Clear LocalStorage for domain</a></li>
-	</ul>
-	</li>
 	<li><a href='#'>Pages</a>
 	<ul>
-		<li><a href='#' onClick="app.ext.admin.a.showPicker(app.u.jqSelector('#',app.ext.admin.vars.tab+'Content')); return false;">showPicker</a>
-		<li><a href='#' onClick="app.ext.admin_config.a.showRulesBuilderInModal({'mode':'shipping','provider':'FLEX:LOCAL_CANADA_1369228546','table':'RULES'}); return false;">showRulesBuilderInModal</a></li>
-		<li><a href='#' onClick="navigateTo('#!launchpad'); return false;">Launchpad</a></li>
-		<li><a href='#' onClick="navigateTo('#!giftcardManager'); return false;">giftcardManager</a></li>
-		<li><a href='#' onClick="navigateTo('#!reviewsManager'); return false;">showReviewsManager</a></li>
+
+		<li><a href='#' onClick='app.model.addDispatchToQ({"_cmd":"adminProductInventoryDetail","pid":"OUTFIT"},"mutable"); app.model.dispatchThis("mutable"); return false;'>adminProductInventoryDetail</a></li>	
 		
-		<li><a href='#' onClick="navigateTo('#!supplierManager'); return false;">Supplier Manager</a></li>
+		<li><a href='#' onClick="app.model.addDispatchToQ({'_cmd':'adminConfigDetail','tuning':'1'},'mutable'); app.model.dispatchThis('mutable'); return false;">adminConfigDetail -> tuning</a></li>
+
+		<li><a href='#' onClick="navigateTo('#!launchpad'); return false;">Launchpad</a></li>
 		<li><a href='#' onClick="navigateTo('#!appChooser'); return false;">App Chooser</a></li>
 		<li><a href='#' onClick="$('#setupContent').empty(); app.ext.admin.a.showAchievementList($('#setupContent')); return false;">showAchievementList (in setup)</a></li>
 	</ul>
 	</li>
 	<li><a href='#'>Test</a>
 	<ul>
-
-
+		<li><a href='#' onClick='app.model.addDispatchToQ({"mode":"elastic-native","size":250,"filter":{"and":[{"range":{"base_price":{"from":0,"to":50000}}},{"term":{"pogs":"AC"}}]},"_cmd":"appPublicSearch","type":"product"},"mutable"); app.model.dispatchThis("mutable"); return false;'>elastic-native</a></li>	
 		<li><a href='#' onClick="$('#globalMessaging').anymessage(app.u.successMsgObject('Changes have been saved. and then there is this other text to make the text block a bit more texty and long, which is good for testing because it sometimes happens.')); return false;">throw success message</a></li>
 		
 		<li><a href='#' onClick="app.model.destroy('adminSyndicationList'); app.model.addDispatchToQ({'_cmd':'adminSyndicationList'},'mutable'); app.model.dispatchThis('mutable');">adminSyndicationList</a></li>
 
 		<li><a href='#' onClick="app.model.destroy('adminConfigDetail'); app.ext.admin.calls.adminConfigDetail.init({'inventory':true},{},'mutable'); app.model.dispatchThis('mutable');">adminConfigDetail</a></li>
-
-		
 	
 	</ul>
-	</li>	
+	</li>
 </ul>
 
-<!--
-<button onClick="app.ext.admin.calls.appResource.init('email_macros.json',{},'mutable'); app.model.dispatchThis('mutable');">appResource</button>
-<button onClick="app.ext.admin.calls.appResource.init('shipcodes.json',{},'mutable'); app.model.dispatchThis('mutable');">shipcodes.json</button>
-<button onClick="app.ext.admin.calls.adminEmailList.init({},'mutable'); app.model.dispatchThis('mutable');">adminEmailList</button>
-<button onClick="app.model.addDispatchToQ({'_cmd':'adminDataQuery','query':'listing-active','since_gmt':app.u.unixNow() - (60*60*24*10)},'mutable'); app.model.dispatchThis('mutable');">adminDataQuery</button>
-<button onClick="app.ext.admin.calls.appConfig.init(); app.model.dispatchThis();">appConfig</button>
-
--->
-
-<!-- app.model.addDispatchToQ(obj,q); -->
-
-
 
 </div>
 
@@ -413,39 +450,6 @@ These two pieces of data are used for mapping after the uploads to set what fold
 
 
 
-
-<!--
-
-This is content that isn't template worthy, but still necessary (most likely for modals or static pages)
-
--->
-
-
-
-
-<div id='orderListTab' class='ui-widget ui-widget-content displayNone'>
-	<div class='positionRelative'>
-		<div class='tab ui-state-default ui-corner-right smallPadding'><span>Order&nbsp;Results</span></div><!-- non breaking space to prevent word wrap -->
-		<div class='ordersContainer minimalMode'>
-		<table class='gridTable'>
-			<thead><tr></tr></thead><!-- will get a clone of order list thead -->
-			<tbody></tbody><!-- will get appended w/ the children of the order list -->
-		</table>
-		</div>
-	</div>
-</div>
-
-<div id='productListTab' class='ui-widget ui-widget-content displayNone'>
-	<div class='positionRelative'>
-		<div class='tab ui-state-default ui-corner-right smallPadding'><span>Product&nbsp;Results</span></div><!-- non breaking space to prevent word wrap -->
-		<div class='productContainer minimalMode'>
-		<table class='gridTable'>
-			<thead><tr></tr></thead><!-- will get a clone of order list thead -->
-			<tbody></tbody><!-- will get appended w/ the children of the order list -->
-		</table>
-		</div>
-	</div>
-</div>
 
 
 </body>
