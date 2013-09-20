@@ -2152,3 +2152,13 @@ ul.categoryList	{margin:0 auto;}
 #slideshowNav a:focus { outline: none; }
 
 
+
+
+/**********************************************************************************************************************************/
+/****POST 201336 UPDATE****/
+
+#mainContentArea{
+	float:left;
+}
+
+
