@@ -26,6 +26,8 @@ app.rq.push(['extension',1,'tools_ABtesting','extensions/tools_ABtesting.js']);
 //app.rq.push(['extension',1,'powerReviews_reviews','extensions/partner_powerreviews_reviews.js','startExtension']);
 //app.rq.push(['extension',0,'magicToolBox_mzp','extensions/partner_magictoolbox_mzp.js','startExtension']); // (not working yet - ticket in to MTB)
 
+//CUSTOM EXTENSIONS ADDED
+
 app.rq.push(['script',0,(document.location.protocol == 'file:') ? app.vars.testURL+'jquery/config.js' : app.vars.baseURL+'jquery/config.js']); //The config.js is dynamically generated.
 app.rq.push(['script',0,app.vars.baseURL+'model.js']); //'validator':function(){return (typeof zoovyModel == 'function') ? true : false;}}
 app.rq.push(['script',0,app.vars.baseURL+'includes.js']); //','validator':function(){return (typeof handlePogs == 'function') ? true : false;}})
@@ -34,6 +36,45 @@ app.rq.push(['script',0,app.vars.baseURL+'controller.js']);
 
 app.rq.push(['script',0,app.vars.baseURL+'resources/jquery.showloading-v1.0.jt.js']); //used pretty early in process..
 app.rq.push(['script',0,app.vars.baseURL+'resources/jquery.ui.anyplugins.js']); //in zero pass in case product page is first page.
+
+//CUSTOM FILES ADDED
+app.rq.push(['script',0,app.vars.baseURL+'cycle-3.0.3.js']);
+
+app.rq.push({
+	'pass':2,
+	'callback': function(){thefind.upfront.init('tf_upfront_badge', '691eadd098a54cdea2e1bf0b1ed84dd2')},
+	'location':('https:' == document.location.protocol ? 'https:' : 'http:') + '//upfront.thefind.com/scripts/main/utils-init-ajaxlib/upfront-badgeinit.js',
+	'validator':function(){return (typeof _gaq === 'object') ? true : false;}
+	})
+
+
+
+
+app.rq.push(['templateFunction','homepageTemplate','onCompletes',function(P) {
+	$('#wideSlideshow').cycle({
+			fx:     'fade',
+			speed:  'slow',
+			timeout: 5000,
+			pager:  '#slideshowNav',
+			slideExpr: 'li'
+			});
+		}]); //display product blob fields in tabbed format.
+
+
+
+
+// BEGIN brands popup
+	$('img.shop-btn, .closeBrandPopup').click(function () {
+		$('.shopbybrand-btn ul').slideToggle('fast');
+		});
+
+	$('ul.shopbybrand-btn').mouseover(function () {
+		$(this).animate({ fontSize: "14px", paddingLeft: "20px" }, 50);
+		});
+
+	$('ul.shopbybrand-btn').mouseout(function () {
+		$(this).animate({ fontSize: "12px", paddingLeft: "10px" }, 50);
+		});
 
 
 
