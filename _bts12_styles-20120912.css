@@ -2192,4 +2192,10 @@ ul.categoryList	{margin:0 auto;}
 	float:right;
 }
 
+/****CUSTOMER PAGES****/
+.mainColumn{
+	float: left;
+    width: 730px;
+}
+
 

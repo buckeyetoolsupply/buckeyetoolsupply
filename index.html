@@ -431,11 +431,11 @@ the homepageTemplate template is loaded into mainContentArea by default when the
 <div id="slideshowContainer">
 	<div id="slideshowNav"></div>
 	<ul id="wideSlideshow" class="pics slideshow">
-		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow1); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow2); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow3); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow4); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow5); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: category(%page.banner_slideshow1); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: category(%page.banner_slideshow2); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: category(%page.banner_slideshow3); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: category(%page.banner_slideshow4); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: category(%page.banner_slideshow5); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
 	</ul>
 </div>
 
@@ -446,17 +446,17 @@ the homepageTemplate template is loaded into mainContentArea by default when the
 
 
 	<ul class='bannerQuadContainer noPadOrMargin fluidList clearfix'>
-		<img src='blank.gif' width='198' height='198' data-bind="var: page(banner_square1); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='blank.gif' width='198' height='198' data-bind="var: page(banner_square2); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='blank.gif' width='198' height='198' data-bind="var: page(banner_square3); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='blank.gif' width='198' height='198' data-bind="var: page(banner_square4); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='198' height='198' data-bind="var: category(%page.banner_square1); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='198' height='198' data-bind="var: category(%page.banner_square2); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='198' height='198' data-bind="var: category(%page.banner_square3); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='198' height='198' data-bind="var: category(%page.banner_square4); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
 	
 	</ul>
 
 	<h2>Check Out Our Recommendations For You</h2>
 	<ul id='homepageRecommended' data-bind="var: category(@products); format: productList; editor: finder; extension: store_prodlist; loadsTemplate: productListTemplate; hide_multipage:1; withInventory:1;withVariations:1;" class='listStyleNone fluidList clearfix noPadOrMargin productList'></ul>
 	
-	<div data-bind="var: page(description); format:wiki; wikiFormats:myRIA; editor: textarea;" class='textBlock'></div>
+    <div class='textBlock' data-bind="var: category(%page.description); format:wiki; wikiFormats:myRIA; editor: textarea;"></div>
 
 
 </div>
