@@ -647,7 +647,7 @@ note - there is NO error checking in here to make sure the subcats aren't alread
 				var catsArray = new Array(); //what is returned. incremented with each dispatch created.
 				var L = app.data['appNavcatDetail|'+catSafeID]['@subcategoryDetail'].length
 				for(var i = 0; i < L; i += 1)	{
-					catsArray.push(app.data['appNavcatDetail|'+catSafeID]['@subcategoryDetail'][i].id);
+					catsArray.push(app.data['appNavcatDetail|'+catSafeID]['@subcategoryDetail'][i].path);
 					}
 				//app.u.dump(catsArray);
 				return catsArray;			
