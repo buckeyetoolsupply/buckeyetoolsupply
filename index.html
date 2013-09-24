@@ -433,11 +433,11 @@ the homepageTemplate template is loaded into mainContentArea by default when the
 <div id="slideshowContainer">
 	<div id="slideshowNav"></div>
 	<ul id="wideSlideshow" class="pics slideshow">
-		<img src='images/blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow1); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='images/blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow2); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='images/blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow3); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='images/blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow4); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='images/blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow5); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow1); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow2); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow3); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow4); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='712' height='400' data-bind="var: page(banner_slideshow5); format: banner; extension:myRIA; editor:banner; wrap:<li>;" />
 	</ul>
 </div>
 
@@ -448,10 +448,10 @@ the homepageTemplate template is loaded into mainContentArea by default when the
 
 
 	<ul class='bannerQuadContainer noPadOrMargin fluidList clearfix'>
-		<img src='images/blank.gif' width='198' height='198' data-bind="var: page(banner_square1); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='images/blank.gif' width='198' height='198' data-bind="var: page(banner_square2); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='images/blank.gif' width='198' height='198' data-bind="var: page(banner_square3); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
-		<img src='images/blank.gif' width='198' height='198' data-bind="var: page(banner_square4); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='198' height='198' data-bind="var: page(banner_square1); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='198' height='198' data-bind="var: page(banner_square2); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='198' height='198' data-bind="var: page(banner_square3); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
+		<img src='blank.gif' width='198' height='198' data-bind="var: page(banner_square4); format: bannerText; extension:myRIA; editor:banner; wrap:<li>;" />
 	
 	</ul>
 
@@ -531,10 +531,8 @@ don't modify the 'data-templateid' unless you are changing template names and up
 
 
 <li id='categoryListTemplateRootCats'>
-	<div onClick="showContent('category',{'navcat':$(this).parent().attr('data-catsafeid')});" class='pointer'>
-		<div class='thumbContainer'><img src='blank.gif' class='catThumb' alt='' data-bind='var: category(%meta.CAT_THUMB); format:imageURL;' width='35' height='35' /></div>
-		<div class='catName'><span data-bind='var: category(pretty); format:catText; extension: myRIA;'></span></div>
-	</div>
+	<a data-bind='var: category(pretty); format:text;'  onClick="showContent('category',{'navcat':$(this).parent().attr('data-catsafeid')});"></a>
+	<ul data-bind='var:category(@subcategoryDetail); format:subcategory2LevelList; extension:store_navcats; ' class='subcats'></ul>
 </li>
 
 </ul>
