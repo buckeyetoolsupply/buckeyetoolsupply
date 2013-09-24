@@ -55,17 +55,18 @@ The startExtension will re-execute if this script isn't loaded until it has fini
 			startExtension : {
 				onSuccess : function(){
 
-app.u.dump("BEGIN buysafe_guarantee.startExtension.onSuccess.");
+				app.u.dump("BEGIN buysafe_guarantee.startExtension.onSuccess.");
 
 //make sure that not only has myRIA been loaded, but that the createTemplateFunctions has executed
 					if(app.ext.myRIA && app.ext.myRIA.template && app.ext.myRIA.template.productTemplate && typeof WriteBuySafeKickers == 'function' && typeof buySAFE == 'object')	{
-
+						app.u.dump("BuySafe content all exists. Good to go.");
 //http://developer.buysafe.com/bsg_overview.php
 //http://www.buysafe.com/web/general/kickerpreview.aspx
-buySAFE.Hash = ''; //ADD HASH HERE.
+buySAFE.Hash = 'g%2FwH7bQU7HMu67gk2iwEMHPEc9N9c29oDrTM9mtbThtMQluxcBQRkBNmDfJSDKxoD0OxKsqCmMjoV5nWXnt8VQ%3D%3D'; //ADD HASH HERE.
 
 if(buySAFE.Hash.length > 0)	{
 	//the showContent function may have already executed prior to startExtension getting executed.
+	WriteBuySafeSeal("BuySafeSealSpan", "GuaranteedSeal");
 	WriteBuySafeKickers();
 
 	app.ext.myRIA.template.productTemplate.onCompletes.push(function(P) {
@@ -83,10 +84,12 @@ if(buySAFE.Hash.length > 0)	{
 		
 		app.u.dump("BEGIN buysafe_guarantee code pushed on orderCreate.checkoutCompletes");
 		var order = app.data['order|'+P.orderID].cart;
-	
+			
+	   buySAFE.Hash = 'g%2FwH7bQU7HMu67gk2iwEMHPEc9N9c29oDrTM9mtbThtMQluxcBQRkBNmDfJSDKxoD0OxKsqCmMjoV5nWXnt8VQ%3D%3D';
 	   buySAFE.Guarantee.order = P.orderID;
 	   buySAFE.Guarantee.subtotal = order['sum/items_total'];
 	   buySAFE.Guarantee.email = order['bill/email'];
+	   bs_R.fOnLoad = 1;
 	   WriteBuySafeGuarantee("JavaScript");
 	
 		}); // end .push					
@@ -96,11 +99,12 @@ else	{
 	}
 						}
 					else	{
+						app.u.dump("BuySafe content doesn't all exists.Re-running app.ext.buysafe_guarantee.callbacks.startExtension.onSuccess.");
 						setTimeout(function(){app.ext.buysafe_guarantee.callbacks.startExtension.onSuccess()},250);
 						}
 
 					},
-				onError : function(){}
+				onError : function(){app.u.dump("onError has occurred. Stopping Buy Safe function");}
 				}
 			} //r object.
 		}
