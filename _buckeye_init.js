@@ -49,38 +49,6 @@ app.rq.push({
 	'validator':function(){return (typeof _gaq === 'object') ? true : false;}
 	})
 
-/*
-function brandsCompleteFunction(){
-	if(app.ext.myRIA !== undefined && app.ext.myRIA.template !== undefined){
-		app.u.dump("app.ext.myRIA && app.ext.myRIA.template exist. Adding brands");
-			app.ext.store_navcats.calls.appNavcatDetailMax.init('.shop-by-brand',{'callback':'getChildData','extension':'store_navcats','parentID':'brandCategories','templateID':'categoryListTemplateThumb'},'passive');
-	}
-	else{
-		app.u.dump("app.ext.myRIA && app.ext.myRIA.template don't exist. Beginning loop");
-		var addBrandsCheck = false;
-		function retryBrandsAdd(){
-			if(app.ext.myRIA !== undefined && app.ext.myRIA.template !== undefined && addBrandsCheck == false){
-				app.ext.store_navcats.calls.appNavcatDetailMax.init('.shop-by-brand',{'callback':'getChildData','extension':'store_navcats','parentID':'brandCategories','templateID':'categoryListTemplateThumb'},'passive');
-				addBrandsCheck = true;
-			}
-		}
-		for(var i = 0; i < 250; i += 1){
-			if(addBrandsCheck == true){
-				break;
-			}
-			setTimeout(retryBrandsAdd, 1000);
-		}
-	}
-}
-setTimeout(brandsCompleteFunction, 3000);
-*/
-
-/*
-function brandsDropdownContent(){
-	app.ext.store_navcats.calls.appNavcatDetailMax.init('.shop-by-brand',{'callback':'getChildData','extension':'store_navcats','parentID':'brandCategories','templateID':'categoryListTemplateThumb'},'passive');
-}
-setTimeout(brandsDropdownContent, 10000);
-*/
 
 
 app.rq.push(['templateFunction','homepageTemplate','onCompletes',function(P) {
