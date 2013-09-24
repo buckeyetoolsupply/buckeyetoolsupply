@@ -65,7 +65,6 @@ app.u.loadScript(app.vars.baseURL+"_buckeye_init.js");
 <body>
 
 
-
 <!-- what is displayed onLoad until the view is loaded -->
 <div id='appPreView'>
     <table>
@@ -533,6 +532,11 @@ don't modify the 'data-templateid' unless you are changing template names and up
 <li id='categoryListTemplateRootCats'>
 	<a data-bind='var: category(pretty); format:text;'  onClick="showContent('category',{'navcat':$(this).parent().attr('data-catsafeid')});"></a>
 	<ul data-bind='var:category(@subcategoryDetail); format:subcategory2LevelList; extension:store_navcats; ' class='subcats'></ul>
+</li>
+
+<li id='categoryListTemplateThumb' onClick="showContent('category',{'navcat':$(this).attr('data-catsafeid')}); $('.shopbybrand-btn ul').slideToggle('fast');" class='pointer'>
+	<span><img src='images/blank.gif' class='catThumb' data-bind='var: category(%meta.CAT_THUMB); format:imageURL;' width='185' height='40' /></span>
+	<a data-bind='var: category(pretty); format:text;'  onClick="showContent('category',{'navcat':$(this).parent().attr('data-catsafeid')});"></a>
 </li>
 
 </ul>

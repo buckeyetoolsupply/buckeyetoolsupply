@@ -19,7 +19,7 @@ app.rq.push(['extension',0,'entomologist','extensions/entomologist/extension.js'
 app.rq.push(['extension',0,'tools_animation','extensions/tools_animation.js']);
 
 //app.rq.push(['extension',1,'google_analytics','extensions/partner_google_analytics.js','startExtension']);
-app.rq.push(['extension',1,'tools_ABtesting','extensions/tools_ABtesting.js']);
+//app.rq.push(['extension',1,'tools_ABtesting','extensions/tools_ABtesting.js']);
 //app.rq.push(['extension',0,'partner_addthis','extensions/partner_addthis.js']);
 //app.rq.push(['extension',1,'resellerratings_survey','extensions/partner_buysafe_guarantee.js','startExtension']); /// !!! needs testing.
 app.rq.push(['extension',1,'buysafe_guarantee','extensions/partner_buysafe_guarantee.js','startExtension']);
@@ -27,6 +27,7 @@ app.rq.push(['extension',1,'buysafe_guarantee','extensions/partner_buysafe_guara
 //app.rq.push(['extension',0,'magicToolBox_mzp','extensions/partner_magictoolbox_mzp.js','startExtension']); // (not working yet - ticket in to MTB)
 
 //CUSTOM EXTENSIONS ADDED
+
 
 app.rq.push(['script',0,(document.location.protocol == 'file:') ? app.vars.testURL+'jquery/config.js' : app.vars.baseURL+'jquery/config.js']); //The config.js is dynamically generated.
 app.rq.push(['script',0,app.vars.baseURL+'model.js']); //'validator':function(){return (typeof zoovyModel == 'function') ? true : false;}}
@@ -51,6 +52,8 @@ app.rq.push({
 
 
 app.rq.push(['templateFunction','homepageTemplate','onCompletes',function(P) {
+	app.ext.store_navcats.calls.appNavcatDetailMax.init('.shop-by-brand',{'callback':'getChildData','extension':'store_navcats','parentID':'brandCategories','templateID':'categoryListTemplateThumb'},'passive');
+	
 	$('#wideSlideshow').cycle({
 			fx:     'fade',
 			speed:  'slow',
@@ -75,7 +78,6 @@ app.rq.push(['templateFunction','homepageTemplate','onCompletes',function(P) {
 	$('ul.shopbybrand-btn').mouseout(function () {
 		$(this).animate({ fontSize: "12px", paddingLeft: "10px" }, 50);
 		});
-
 
 
 
@@ -105,7 +107,6 @@ app.rq.push(['templateFunction','productTemplate','onCompletes',function(P) {
 
 //group any third party files together (regardless of pass) to make troubleshooting easier.
 app.rq.push(['script',0,(document.location.protocol == 'https:' ? 'https:' : 'http:')+'//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js']);
-
 
 /*
 This function is overwritten once the controller is instantiated. 
